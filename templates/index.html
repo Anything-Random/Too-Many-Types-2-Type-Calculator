@@ -11,7 +11,6 @@ body {
   font-family: system-ui, sans-serif;
   background: #111;
   color: #eee;
-  /* Add padding to bottom so content isn't flush with window edge */
   padding-bottom: 3rem; 
 }
 
@@ -32,7 +31,7 @@ header button {
   background: #333;
   color: #eee;
   border: none;
-  border-radius: 4px; /* Slight rounded corners look nicer */
+  border-radius: 4px;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -42,16 +41,21 @@ header button:hover {
 }
 
 header button.active {
-  background: #007acc; /* A nice highlight color */
+  background: #007acc;
   font-weight: bold;
 }
 
 /* ================= LAYOUT ================= */
-/* This container prevents content from stretching to the edges */
 .container {
-  max-width: 900px;
+  max-width: 900px; /* Default narrow width for Calculator */
   margin: 0 auto;
   padding: 0 1rem;
+  transition: max-width 0.3s ease; /* Smooth transition when resizing */
+}
+
+/* We add this class via JS when switching to Team tab */
+.container.wide {
+  max-width: 95%; 
 }
 
 .view {
@@ -77,7 +81,7 @@ header button.active {
   color: #66b3ff;
 }
 
-/* ================= TABLES & INPUTS ================= */
+/* ================= INPUTS ================= */
 select {
   background: #222;
   color: #eee;
@@ -85,31 +89,53 @@ select {
   padding: 0.5rem;
   font-size: 1rem;
   border-radius: 4px;
-  width: 100%; /* Fill the column width, not the screen width */
+  width: 100%;
   box-sizing: border-box;
 }
 
-table {
-  border-collapse: collapse;
-  margin-top: 0.5rem;
-  width: 100%;
+/* ================= RESULT GRIDS (Replaces Tables) ================= */
+/* This grid automatically creates columns that fit the screen */
+.coverage-grid {
+  display: grid;
+  /* Minimum 85px wide per cell, fitting as many as possible per row */
+  grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+  gap: 4px; 
+  margin-top: 1rem;
 }
 
-th, td {
+.type-cell {
+  background: #111;
   border: 1px solid #444;
-  padding: 8px;
-  font-size: 0.9rem;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
 }
 
-th {
+.type-header {
   background: #222;
+  padding: 6px;
+  font-size: 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid #444;
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis; /* Handle long names like Mystery/Typeless */
+  font-weight: bold;
+}
+
+.type-value {
+  padding: 8px;
+  text-align: center;
+  font-size: 0.9rem;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ================= CALCULATOR SPECIFIC ================= */
 .calculator {
   display: grid;
-  grid-template-columns: 1fr auto 1fr; /* Left, Middle, Right */
+  grid-template-columns: 1fr auto 1fr;
   gap: 2rem;
   align-items: start;
   background: #1a1a1a;
@@ -139,7 +165,7 @@ th {
   font-weight: bold;
   min-width: 4ch;
   text-align: center;
-  padding-top: 3.5rem; /* Align vertically with inputs */
+  padding-top: 3.5rem;
   color: #fff;
   text-shadow: 0 0 10px rgba(255,255,255,0.1);
 }
@@ -159,7 +185,6 @@ th {
   color: #66b3ff;
 }
 
-/* Helper for the move rows */
 .move-row {
   display: flex;
   align-items: center;
@@ -177,7 +202,7 @@ th {
   <button data-view="defence">Defensive Match-Up</button>
 </header>
 
-<div class="container">
+<div class="container" id="main-container">
   
   <div class="description">
     <p style="margin-top: 0;">
@@ -209,7 +234,7 @@ th {
         info becomes available.
         If anyone has any corrections on how this works they can message
         me in the Too Many Productions discord @anything_random.
-          </p>
+      </p>
     </div>
 
     <div class="calculator">
@@ -248,7 +273,9 @@ th {
     <p style="text-align: center;">(To be implemented later)</p>
   </div>
 
-</div> <script>
+</div> 
+
+<script>
 /* ===================== CONSTANTS ===================== */
 
 const TYPES = [
@@ -312,7 +339,6 @@ async function calculate() {
       });
 
       const data = await response.json();
-      // Format to max 2 decimals if needed, or keep as is
       document.getElementById("result").textContent = `${data.multiplier}×`;
     } catch {
       document.getElementById("result").textContent = "ERR";
@@ -334,54 +360,64 @@ function makeTypeSelect() {
   return s;
 }
 
+// UPDATED FUNCTION: Uses Grid instead of Table
 function renderTable(container, data) {
   container.innerHTML = "";
   if (!data || Object.keys(data).length === 0) return;
 
-  const table = document.createElement("table");
-  const tr1 = document.createElement("tr");
-  const tr2 = document.createElement("tr");
+  const grid = document.createElement("div");
+  grid.className = "coverage-grid";
 
-  // Sort keys alphabetically or logically if preferred, currently just Object order
-  Object.entries(data).forEach(([type, val]) => {
-    const th = document.createElement("th");
-    th.textContent = type;
-    const td = document.createElement("td");
+  // Sort keys alphabetically
+  const sortedKeys = Object.keys(data).sort();
+
+  sortedKeys.forEach(type => {
+    const val = data[type];
+
+    const cell = document.createElement("div");
+    cell.className = "type-cell";
+
+    const header = document.createElement("div");
+    header.className = "type-header";
+    header.textContent = type;
+    header.title = type; // tooltip for truncated names
+
+    const valueDiv = document.createElement("div");
+    valueDiv.className = "type-value";
     
-    // Color coding for readability
-    if(val > 1) td.style.color = "#51cf66"; // Green-ish for super effective
-    if(val < 1) td.style.color = "#ff6b6b"; // Red-ish for not effective
+    // Color coding logic
+    if(val > 1) valueDiv.style.color = "#51cf66"; // Green
+    if(val < 1) valueDiv.style.color = "#ff6b6b"; // Red
     
-    td.textContent = val + "×";
-    tr1.appendChild(th);
-    tr2.appendChild(td);
+    // Slight bold for important multipliers
+    if(val !== 1) valueDiv.style.fontWeight = "bold";
+
+    valueDiv.textContent = parseFloat(val).toFixed(2) + "×";
+
+    cell.appendChild(header);
+    cell.appendChild(valueDiv);
+    grid.appendChild(cell);
   });
 
-  table.append(tr1, tr2);
-  container.appendChild(table);
+  container.appendChild(grid);
 }
 
 /* ===================== TEAM UI ===================== */
 
 function buildTeamUI() {
   const container = document.getElementById("team-container");
-  
-  // Optimization: If we already built it, don't rebuild (clears selections otherwise)
   if (container.children.length > 0) return;
-
   container.innerHTML = "";
 
   for (let p = 0; p < TEAM_SIZE; p++) {
     const block = document.createElement("div");
     block.style.marginBottom = "1.5rem";
     block._moves = [];
-
     block.innerHTML = `<strong>Pokemon ${p + 1}</strong>`;
 
     for (let m = 0; m < MOVES_PER_POKEMON; m++) {
       const line = document.createElement("div");
       line.className = "move-row"; 
-
       const label = document.createElement("span");
       label.textContent = `Move ${m + 1}:`;
       label.style.minWidth = "60px";
@@ -394,7 +430,6 @@ function buildTeamUI() {
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.id = `p${p}m${m}-multi`;
-
       const cbLabel = document.createElement("label");
       cbLabel.textContent = "Dual Type?";
       cbLabel.setAttribute("for", `p${p}m${m}-multi`);
@@ -405,11 +440,9 @@ function buildTeamUI() {
         s2.style.display = cb.checked ? "inline-block" : "none";
         calculateTeam();
       };
-
       s1.onchange = s2.onchange = calculateTeam;
 
       line.append(label, s1, cb, cbLabel, s2);
-
       block._moves.push({ s1, s2, cb });
       block.appendChild(line);
     }
@@ -417,9 +450,7 @@ function buildTeamUI() {
     const result = document.createElement("div");
     result.id = `pokemon-${p}`;
     result.style.marginTop = "1rem";
-    result.style.overflowX = "auto"; // Scroll if table is too wide
     block.appendChild(result);
-
     container.appendChild(block);
   }
 }
@@ -430,7 +461,6 @@ async function calculateTeam() {
 
   for (let i = 0; i < rows.length; i++) {
     const moves = [];
-    // rows[i] is the block div. usage of _moves property attached to DOM element
     if (!rows[i]._moves) continue;
 
     for (const m of rows[i]._moves) {
@@ -441,7 +471,10 @@ async function calculateTeam() {
         moves.push([m.s1.value]);
     }
 
-    if (moves.length === 0) continue;
+    if (moves.length === 0) {
+        document.getElementById(`pokemon-${i}`).innerHTML = ""; 
+        continue;
+    }
     team.push(moves);
 
     try {
@@ -481,10 +514,14 @@ document.querySelectorAll("header button").forEach(btn => {
     const viewId = btn.dataset.view;
     const viewElement = document.getElementById(viewId);
     
-    if (viewElement) {
-        viewElement.classList.add("active");
+    if (viewElement) viewElement.classList.add("active");
+
+    // LAYOUT LOGIC: Widen container only for the Team view
+    const mainContainer = document.getElementById("main-container");
+    if (viewId === 'team') {
+        mainContainer.classList.add("wide");
     } else {
-        console.error(`View ID '${viewId}' not found.`);
+        mainContainer.classList.remove("wide");
     }
 
     // Logic Trigger
