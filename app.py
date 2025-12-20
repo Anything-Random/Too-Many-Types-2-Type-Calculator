@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from Type_Advantage import *
 
 app = Flask(__name__)
