@@ -3,6 +3,10 @@ from Type_Advantage import *
 
 app = Flask(__name__)
 
+@app.route("/")
+def index():
+    return render_template("index.html")
+
 @app.route("/attack", methods=["POST"])
 def attack_route():
     data = request.json
