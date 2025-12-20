@@ -1,105 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Type Calculator</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #111;
-      color: #eee;
-    }
+<meta charset="UTF-8">
+<title>Type Calculator</title>
 
-    header {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      padding: 1rem;
-      background: #1c1c1c;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #111;
+  color: #eee;
+}
 
-    header button {
-      padding: 0.6rem 1.2rem;
-      font-size: 1rem;
-      background: #333;
-      color: #eee;
-      border: none;
-      cursor: pointer;
-    }
+header {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #1c1c1c;
+}
 
-    header button.active {
-      background: #555;
-      font-weight: bold;
-    }
+header button {
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  background: #333;
+  color: #eee;
+  border: none;
+  cursor: pointer;
+}
 
-    .description {
-      max-width: 900px;
-      margin: 1.5rem auto 0;
-      padding: 0 1rem;
-      text-align: center;
-      line-height: 1.5;
-      color: #ccc;
-    }
+header button.active {
+  background: #555;
+  font-weight: bold;
+}
 
-    main {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: calc(100vh - 220px);
-    }
+.description {
+  max-width: 1000px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+  text-align: center;
+  color: #ccc;
+}
 
-    .calculator {
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+select {
+  background: #222;
+  color: #eee;
+  border: 1px solid #444;
+  padding: 0.3rem;
+}
+
+table {
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+th, td {
+  border: 1px solid #444;
+  padding: 4px;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.calculator {
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       gap: 3rem;
       align-items: start;
-    }
-
-    .column {
+}
+  
+.column {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-    }
-
-    .column h2 {
+}
+  
+.column h2 {
       margin: 0 0 0.5rem;
       text-align: center;
       font-size: 1.2rem;
       font-weight: 600;
       color: #ddd;
-    }
+}
 
-    select {
+select {
       padding: 0.5rem;
       font-size: 1rem;
       background: #222;
       color: #eee;
       border: 1px solid #444;
-    }
+}
 
-    .result {
+.result {
       font-size: 4rem;
       font-weight: bold;
       min-width: 6ch;
       text-align: center;
       padding-top: 2.2rem;
-    }
-  </style>
+}
+</style>
 </head>
+
 <body>
 
 <header>
-  <button class="active">Move Effectiveness</button>
-  <button>Team Coverage</button>
-  <button>Defensive Match-Up</button>
+  <button class="active" data-view="matchup">Move Effectiveness</button>
+  <button data-view="team">Team Coverage</button>
+  <button data-view="defence">Defensive Match-Up</button>
 </header>
 
 <div class="description">
   <p>
     This page contains some handy tools for the ROM hack Too Many Types 2,
-    avaible at <a href=https://www.hackdex.app/hack/too-many-types-2>hackdex</a>.
+    available at <a href=https://www.hackdex.app/hack/too-many-types-2>hackdex</a>.
   </p>
+</div>
+<div id="matchup" class="view active description">
   <p>
     The <strong>Move Effectiveness Calculator</strong> shows the type
     effectiveness of a damaging move against a pokemon of the chosen
@@ -112,19 +135,21 @@
     defending pokemon and then multiplied them together. I allowed
     defending pokemon to have up to 4 types to account for
     type-adding moves. I wasn't sure how many types an attack can
-    have so I just made it symmetrical. I assumed that the Uno type
+    have, so I just made it symmetrical. I assumed that the Uno type
     works by taking the reciprocal of the usual type effectiveness
     (i.e., 0.5x becomes 1/0.5 = 2x) and immunity just becomes 2x.
-    Lastly, I wasn't sure how the Every type works, it seems like
+    Also, I wasn't sure how the Every type works, it seems like
     it has some special functionality, but I just used the numbers
-    presented in the type chart andd I will update it when any new
+    presented in the type chart and I will update it when any new
     info becomes available.
     If anyone has any corrections on how this works they can message
     me in the Too Many Productions discord @anything_random.
   </p>
 </div>
 
-<main>
+<!-- ================= MOVE EFFECTIVENESS ================= -->
+<div id="matchup" class="view active">
+  <h2 style="text-align:center;">Move Effectiveness</h2>
   <div class="calculator">
     <!-- Attack types -->
     <div class="column" id="attack-column">
@@ -147,72 +172,183 @@
       <select></select>
     </div>
   </div>
-</main>
+</div>
+
+<!-- ================= TEAM COVERAGE ================= -->
+<div id="team" class="view">
+  <h2 style="text-align:center;">Team Coverage</h2>
+  <div id="team-container"></div>
+
+  <h3>Full Team Coverage</h3>
+  <div id="team-total"></div>
+</div>
+
+<!-- ================= DEFENCE ================= -->
+<div id="defence" class="view">
+  <h2 style="text-align:center;">Defensive Match-Up</h2>
+  <p>(To be implemented later)</p>
+</div>
 
 <script>
-  const TYPES = [
-    'Normal', 'Fighting', 'Flying', 'Poison', 'Ground', 'Rock', 'Bug',
-    'Ghost', 'Steel', 'Mystery/Typeless', 'Fire', 'Water', 'Grass',
-    'Electric', 'Psychic', 'Ice', 'Dragon', 'Dark', 'Fairy', 'Stellar',
-    'Ancient', 'Anime', 'Baby', 'Ball', 'Bean', 'Bird', 'Brat', 'Boring',
-    'Cat', 'Crab', 'Dance', 'Deez Nuts', 'Emerald', 'Family', 'Fast',
-    'Firefight', 'Florida', 'Fluffy', 'Food', 'Freak', 'Friend', 'Frog',
-    'Furry', 'Future', 'Gamer', 'Gaslight', 'Gatekeep', 'Gender',
-    'Girlboss', 'Goblin', 'Goku', 'Gun', 'Guys', 'Hater', 'Holy', 'Kaiju',
-    'Little', 'Magic', 'Mario', 'Monke', 'Ninja', 'Pikachu', 'Rat',
-    'Reddit', 'Sans', 'Sharp', 'Silly', 'Song', 'Space', 'Stinky', 'Sus',
-    'Thing', 'Ugly', 'Unalive', 'Uno', 'Vgc', 'Vibes', 'Wealth', 'Yapper',
-    'Every'
-  ];
+/* ===================== CONSTANTS ===================== */
 
-  function populateSelect(select) {
-    const empty = document.createElement("option");
-    empty.value = "";
-    empty.textContent = "—";
-    select.appendChild(empty);
+const TYPES = [
+  'Normal','Fighting','Flying','Poison','Ground','Rock','Bug','Ghost','Steel',
+  'Mystery/Typeless','Fire','Water','Grass','Electric','Psychic','Ice','Dragon',
+  'Dark','Fairy','Stellar','Ancient','Anime','Baby','Ball','Bean','Bird','Brat',
+  'Boring','Cat','Crab','Dance','Deez Nuts','Emerald','Family','Fast','Firefight',
+  'Florida','Fluffy','Food','Freak','Friend','Frog','Furry','Future','Gamer',
+  'Gaslight','Gatekeep','Gender','Girlboss','Goblin','Goku','Gun','Guys','Hater',
+  'Holy','Kaiju','Little','Magic','Mario','Monke','Ninja','Pikachu','Rat','Reddit',
+  'Sans','Sharp','Silly','Song','Space','Stinky','Sus','Thing','Ugly','Unalive',
+  'Uno','Vgc','Vibes','Wealth','Yapper','Every'
+];
 
-    for (const type of TYPES) {
-      const option = document.createElement("option");
-      option.value = type;
-      option.textContent = type;
-      select.appendChild(option);
+const TEAM_SIZE = 6;
+const MOVES_PER_POKEMON = 4;
+
+/* ===================== HELPERS ===================== */
+
+function makeTypeSelect() {
+  const s = document.createElement("select");
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = "—";
+  s.appendChild(blank);
+  TYPES.forEach(t => {
+    const o = document.createElement("option");
+    o.value = t;
+    o.textContent = t;
+    s.appendChild(o);
+  });
+  return s;
+}
+
+function renderTable(container, data) {
+  container.innerHTML = "";
+  const table = document.createElement("table");
+  const tr1 = document.createElement("tr");
+  const tr2 = document.createElement("tr");
+
+  Object.entries(data).forEach(([type, val]) => {
+    const th = document.createElement("th");
+    th.textContent = type;
+    const td = document.createElement("td");
+    td.textContent = val + "×";
+    tr1.appendChild(th);
+    tr2.appendChild(td);
+  });
+
+  table.append(tr1, tr2);
+  container.appendChild(table);
+}
+
+/* ===================== TEAM UI ===================== */
+
+function buildTeamUI() {
+  const container = document.getElementById("team-container");
+  container.innerHTML = "";
+
+  for (let p = 0; p < TEAM_SIZE; p++) {
+    const block = document.createElement("div");
+    block.style.marginBottom = "1.5rem";
+    block._moves = [];
+
+    block.innerHTML = `<strong>Pokémon ${p + 1}</strong><br>`;
+
+    for (let m = 0; m < MOVES_PER_POKEMON; m++) {
+      const line = document.createElement("div");
+
+      const s1 = makeTypeSelect();
+      const s2 = makeTypeSelect();
+      s2.style.display = "none";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+
+      cb.onchange = () => {
+        s2.style.display = cb.checked ? "inline-block" : "none";
+        calculateTeam();
+      };
+
+      s1.onchange = s2.onchange = calculateTeam;
+
+      line.append(
+        `Move ${m + 1}: `,
+        s1,
+        cb,
+        document.createTextNode(" Multi-Type "),
+        s2
+      );
+
+      block._moves.push({ s1, s2, cb });
+      block.appendChild(line);
     }
 
-    select.addEventListener("change", calculate);
+    const result = document.createElement("div");
+    result.id = `pokemon-${p}`;
+    block.appendChild(result);
+
+    container.appendChild(block);
+  }
+}
+
+async function calculateTeam() {
+  const rows = document.querySelectorAll("#team-container > div");
+  const team = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const moves = [];
+    for (const m of rows[i]._moves) {
+      if (!m.s1.value) continue;
+      if (m.cb.checked && m.s2.value)
+        moves.push([m.s1.value, m.s2.value]);
+      else
+        moves.push([m.s1.value]);
+    }
+
+    if (moves.length === 0) continue;
+    team.push(moves);
+
+    const res = await fetch("/coverage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ moves })
+    });
+
+    renderTable(
+      document.getElementById(`pokemon-${i}`),
+      await res.json()
+    );
   }
 
-  document.querySelectorAll("select").forEach(populateSelect);
+  if (team.length === 0) return;
 
-  async function calculate() {
-    const attackers = [...document.querySelectorAll("#attack-column select")]
-      .map(s => s.value)
-      .filter(Boolean);
+  const teamRes = await fetch("/team-coverage", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pokemons: team })
+  });
 
-    const defenders = [...document.querySelectorAll("#defence-column select")]
-      .map(s => s.value)
-      .filter(Boolean);
+  renderTable(
+    document.getElementById("team-total"),
+    await teamRes.json()
+  );
+}
 
-    if (attackers.length === 0 || defenders.length === 0) {
-      document.getElementById("result").textContent = "—";
-      return;
-    }
+/* ===================== SPA NAV ===================== */
 
-    try {
-      const response = await fetch("/attack", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          attackers: attackers,
-          defenders: defenders
-        })
-      });
+document.querySelectorAll("header button").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll("header button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
 
-      const data = await response.json();
-      document.getElementById("result").textContent = `${data.multiplier}×`;
-    } catch {
-      document.getElementById("result").textContent = "ERR";
-    }
-  }
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    document.getElementById(btn.dataset.view).classList.add("active");
+
+    if (btn.dataset.view === "team") buildTeamUI();
+  };
+});
 </script>
 
 </body>
