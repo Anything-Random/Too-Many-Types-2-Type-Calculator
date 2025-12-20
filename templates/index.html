@@ -259,6 +259,15 @@ select {
   </div>
 
   <div id="team" class="view">
+    <div class="description" style="text-align: left; font-size: 0.95rem;">
+      <p>
+        <strong>How to use:</strong> Select up to 4 move types for a team of up to 6 pokemon.
+        Under each pokemon you can see their individual type coverage, and at the bottom you
+        can see your entire team's type coverage.
+        For convenience's sake, I've used the more conversative assumption that a move can
+        have at most two types here. I'll update it if that turns out to be incorrect.
+        Remember that you can begin typing with a dropdown box selected to find a type.
+      </p>
     <h2 style="text-align:center; margin-bottom: 1.5rem;">Team Coverage</h2>
     <div id="team-container"></div>
 
@@ -279,15 +288,17 @@ select {
 /* ===================== CONSTANTS ===================== */
 
 const TYPES = [
-  'Normal','Fighting','Flying','Poison','Ground','Rock','Bug','Ghost','Steel',
-  'Mystery/Typeless','Fire','Water','Grass','Electric','Psychic','Ice','Dragon',
-  'Dark','Fairy','Stellar','Ancient','Anime','Baby','Ball','Bean','Bird','Brat',
-  'Boring','Cat','Crab','Dance','Deez Nuts','Emerald','Family','Fast','Firefight',
-  'Florida','Fluffy','Food','Freak','Friend','Frog','Furry','Future','Gamer',
-  'Gaslight','Gatekeep','Gender','Girlboss','Goblin','Goku','Gun','Guys','Hater',
-  'Holy','Kaiju','Little','Magic','Mario','Monke','Ninja','Pikachu','Rat','Reddit',
-  'Sans','Sharp','Silly','Song','Space','Stinky','Sus','Thing','Ugly','Unalive',
-  'Uno','Vgc','Vibes','Wealth','Yapper','Every'
+  'Ancient','Anime','Baby','Ball','Bean','Bird','Boring','Brat',
+  'Bug','Cat','Crab','Dance','Dark','Deez Nuts','Dragon','Electric',
+  'Emerald','Every','Fairy','Family','Fast','Fighting','Fire',
+  'Firefight','Florida','Fluffy','Flying','Food','Freak','Friend',
+  'Frog','Furry','Future','Gamer','Gaslight','Gatekeep','Gender',
+  'Ghost','Girlboss','Goblin','Goku','Grass','Ground','Gun','Guys',
+  'Hater','Holy','Ice','Kaiju','Little','Magic','Mario','Monke',
+  'Mystery/Typeless','Ninja','Normal','Pikachu','Poison','Psychic',
+  'Rat','Reddit','Rock','Sans','Sharp','Silly','Song','Space','Steel',
+  'Stellar','Stinky','Sus','Thing','Ugly','Unalive','Uno','Vgc',
+  'Vibes','Water','Wealth','Yapper'
 ];
 
 const TEAM_SIZE = 6;
