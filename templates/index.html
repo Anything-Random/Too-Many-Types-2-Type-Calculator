@@ -53,7 +53,7 @@ header button.active {
   transition: max-width 0.3s ease; /* Smooth transition when resizing */
 }
 
-/* We add this class via JS when switching to Team tab */
+/* We add this class via JS when switching to Team or Defence tab */
 .container.wide {
   max-width: 95%; 
 }
@@ -94,7 +94,6 @@ select {
 }
 
 /* ================= RESULT GRIDS (Replaces Tables) ================= */
-/* This grid automatically creates columns that fit the screen */
 .coverage-grid {
   display: grid;
   /* Minimum 85px wide per cell, fitting as many as possible per row */
@@ -268,6 +267,8 @@ select {
         have at most two types here. I'll update it if that turns out to be incorrect.
         Remember that you can begin typing with a dropdown box selected to find a type.
       </p>
+    </div>
+    
     <h2 style="text-align:center; margin-bottom: 1.5rem;">Team Coverage</h2>
     <div id="team-container"></div>
 
@@ -278,8 +279,27 @@ select {
   </div>
 
   <div id="defence" class="view">
-    <h2 style="text-align:center;">Defensive Match-Up</h2>
-    <p style="text-align: center;">(To be implemented later)</p>
+    <div class="description" style="text-align: left; font-size: 0.95rem;">
+        <p>
+          <strong>How to use:</strong> Select up to 4 types for your pokemon. 
+          The grid below will show how effective every attack type is against it.
+        </p>
+        <p>
+            <span style="color: #ff6b6b; font-weight: bold;">Red</span> numbers mean you take super-effective damage (Bad).<br>
+            <span style="color: #51cf66; font-weight: bold;">Green</span> numbers mean you resist the damage (Good).
+        </p>
+    </div>
+
+    <div style="max-width: 500px; margin: 0 auto; background: #1a1a1a; padding: 2rem; border-radius: 8px; border: 1px solid #333;">
+        <h2 style="margin-top:0; text-align:center;">Your Pokemon's Type(s)</h2>
+        <div class="column" id="defence-input-column">
+            </div>
+    </div>
+
+    <div style="background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border: 1px solid #333; margin-top: 2rem;">
+        <h3 style="margin-top:0; text-align: center;">Incoming Damage Multipliers</h3>
+        <div id="defence-results"></div>
+    </div>
   </div>
 
 </div> 
@@ -306,7 +326,7 @@ const MOVES_PER_POKEMON = 4;
 
 /* ===================== HELPERS ===================== */
 
-function populateSelect(select) {
+function populateSelect(select, callback) {
     const empty = document.createElement("option");
     empty.value = "";
     empty.textContent = "—";
@@ -319,20 +339,27 @@ function populateSelect(select) {
       select.appendChild(option);
     }
 
-    select.addEventListener("change", calculate);
+    if(callback) select.addEventListener("change", callback);
 }
 
-// Populate the static selects in the Matchup tab
-document.querySelectorAll("#matchup select").forEach(populateSelect);
+// Populate Matchup Tab
+document.querySelectorAll("#matchup select").forEach(s => populateSelect(s, calculateMatchup));
 
-async function calculate() {
+// Populate Defence Tab
+const defenceInputCol = document.getElementById("defence-input-column");
+for(let i=0; i<4; i++) {
+    const s = document.createElement("select");
+    populateSelect(s, calculateDefence);
+    defenceInputCol.appendChild(s);
+}
+
+/* ===================== LOGIC: MATCHUP ===================== */
+
+async function calculateMatchup() {
     const attackers = [...document.querySelectorAll("#attack-column select")]
-      .map(s => s.value)
-      .filter(Boolean);
-
+      .map(s => s.value).filter(Boolean);
     const defenders = [...document.querySelectorAll("#defence-column select")]
-      .map(s => s.value)
-      .filter(Boolean);
+      .map(s => s.value).filter(Boolean);
 
     if (attackers.length === 0 || defenders.length === 0) {
       document.getElementById("result").textContent = "—";
@@ -343,12 +370,8 @@ async function calculate() {
       const response = await fetch("/attack", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          attackers: attackers,
-          defenders: defenders
-        })
+        body: JSON.stringify({ attackers, defenders })
       });
-
       const data = await response.json();
       document.getElementById("result").textContent = `${data.multiplier}×`;
     } catch {
@@ -356,6 +379,75 @@ async function calculate() {
     }
 }
   
+/* ===================== LOGIC: DEFENCE ===================== */
+
+async function calculateDefence() {
+    const types = [...document.querySelectorAll("#defence-input-column select")]
+        .map(s => s.value).filter(Boolean);
+    
+    const resultDiv = document.getElementById("defence-results");
+
+    if(types.length === 0) {
+        resultDiv.innerHTML = "";
+        return;
+    }
+
+    try {
+        const response = await fetch("/defence", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ types })
+        });
+        const data = await response.json();
+        // Pass true for isDefence to invert colors
+        renderTable(resultDiv, data, true); 
+    } catch (e) { console.error(e); }
+}
+
+/* ===================== SHARED: GRID RENDERER ===================== */
+
+function renderTable(container, data, isDefence = false) {
+  container.innerHTML = "";
+  if (!data || Object.keys(data).length === 0) return;
+
+  const grid = document.createElement("div");
+  grid.className = "coverage-grid";
+
+  Object.keys(data).sort().forEach(type => {
+    const val = data[type];
+    const cell = document.createElement("div");
+    cell.className = "type-cell";
+
+    const header = document.createElement("div");
+    header.className = "type-header";
+    header.textContent = type;
+    header.title = type;
+
+    const valueDiv = document.createElement("div");
+    valueDiv.className = "type-value";
+    
+    // COLOR LOGIC
+    if (isDefence) {
+        // Defence Mode: >1 is BAD (Red), <1 is GOOD (Green)
+        if(val > 1) valueDiv.style.color = "#ff6b6b"; 
+        if(val < 1) valueDiv.style.color = "#51cf66"; 
+    } else {
+        // Offense Mode: >1 is GOOD (Green), <1 is BAD (Red)
+        if(val > 1) valueDiv.style.color = "#51cf66"; 
+        if(val < 1) valueDiv.style.color = "#ff6b6b"; 
+    }
+    
+    if(val !== 1) valueDiv.style.fontWeight = "bold";
+    valueDiv.textContent = val + "×";
+    cell.append(header, valueDiv);
+    grid.appendChild(cell);
+  });
+
+  container.appendChild(grid);
+}
+
+/* ===================== LOGIC: TEAM ===================== */
+
 function makeTypeSelect() {
   const s = document.createElement("select");
   const blank = document.createElement("option");
@@ -370,50 +462,6 @@ function makeTypeSelect() {
   });
   return s;
 }
-
-// UPDATED FUNCTION: Uses Grid instead of Table
-function renderTable(container, data) {
-  container.innerHTML = "";
-  if (!data || Object.keys(data).length === 0) return;
-
-  const grid = document.createElement("div");
-  grid.className = "coverage-grid";
-
-  // Sort keys alphabetically
-  const sortedKeys = Object.keys(data).sort();
-
-  sortedKeys.forEach(type => {
-    const val = data[type];
-
-    const cell = document.createElement("div");
-    cell.className = "type-cell";
-
-    const header = document.createElement("div");
-    header.className = "type-header";
-    header.textContent = type;
-    header.title = type; // tooltip for truncated names
-
-    const valueDiv = document.createElement("div");
-    valueDiv.className = "type-value";
-    
-    // Color coding logic
-    if(val > 1) valueDiv.style.color = "#51cf66"; // Green
-    if(val < 1) valueDiv.style.color = "#ff6b6b"; // Red
-    
-    // Slight bold for important multipliers
-    if(val !== 1) valueDiv.style.fontWeight = "bold";
-
-    valueDiv.textContent = val + "×";
-
-    cell.appendChild(header);
-    cell.appendChild(valueDiv);
-    grid.appendChild(cell);
-  });
-
-  container.appendChild(grid);
-}
-
-/* ===================== TEAM UI ===================== */
 
 function buildTeamUI() {
   const container = document.getElementById("team-container");
@@ -437,7 +485,6 @@ function buildTeamUI() {
       const s1 = makeTypeSelect();
       const s2 = makeTypeSelect();
       s2.style.display = "none";
-
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.id = `p${p}m${m}-multi`;
@@ -457,7 +504,6 @@ function buildTeamUI() {
       block._moves.push({ s1, s2, cb });
       block.appendChild(line);
     }
-
     const result = document.createElement("div");
     result.id = `pokemon-${p}`;
     result.style.marginTop = "1rem";
@@ -481,13 +527,11 @@ async function calculateTeam() {
       else
         moves.push([m.s1.value]);
     }
-
     if (moves.length === 0) {
         document.getElementById(`pokemon-${i}`).innerHTML = ""; 
         continue;
     }
     team.push(moves);
-
     try {
       const res = await fetch("/coverage", {
         method: "POST",
@@ -502,7 +546,6 @@ async function calculateTeam() {
       document.getElementById("team-total").innerHTML = "";
       return;
   }
-
   try {
     const teamRes = await fetch("/team-coverage", {
         method: "POST",
@@ -517,25 +560,24 @@ async function calculateTeam() {
 
 document.querySelectorAll("header button").forEach(btn => {
   btn.onclick = () => {
-    // UI Toggles
+    // 1. Handle Active States
     document.querySelectorAll("header button").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
 
     document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
     const viewId = btn.dataset.view;
     const viewElement = document.getElementById(viewId);
-    
     if (viewElement) viewElement.classList.add("active");
 
-    // LAYOUT LOGIC: Widen container only for the Team view
+    // 2. Handle Container Width (Team & Defence need Wide view)
     const mainContainer = document.getElementById("main-container");
-    if (viewId === 'team') {
+    if (viewId === 'team' || viewId === 'defence') {
         mainContainer.classList.add("wide");
     } else {
         mainContainer.classList.remove("wide");
     }
 
-    // Logic Trigger
+    // 3. Lazy Load Logic
     if (viewId === "team") buildTeamUI();
   };
 });
