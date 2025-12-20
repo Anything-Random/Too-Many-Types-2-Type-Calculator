@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Type Calculator</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: #eee;
+    }
+
+    header {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: #1c1c1c;
+    }
+
+    header button {
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      background: #333;
+      color: #eee;
+      border: none;
+      cursor: pointer;
+    }
+
+    header button.active {
+      background: #555;
+      font-weight: bold;
+    }
+
+    main {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: calc(100vh - 70px);
+    }
+
+    .calculator {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    select {
+      padding: 0.5rem;
+      font-size: 1rem;
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
+    }
+
+    .result {
+      font-size: 4rem;
+      font-weight: bold;
+      min-width: 6ch;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <button class="active">Match-Up</button>
+  <button disabled>Coverage</button>
+  <button disabled>Defence</button>
+</header>
+
+<main>
+  <div class="calculator">
+    <!-- Attack types -->
+    <div class="column" id="attack-column">
+      <select></select>
+      <select></select>
+      <select></select>
+      <select></select>
+    </div>
+
+    <!-- Result -->
+    <div class="result" id="result">1×</div>
+
+    <!-- Defence types -->
+    <div class="column" id="defence-column">
+      <select></select>
+      <select></select>
+      <select></select>
+      <select></select>
+    </div>
+  </div>
+</main>
+
+<script>
+  // 🔧 CHANGE THIS to your hosted backend URL
+  const API_BASE = "https://your-backend.example.com";
+
+  // Replace with your actual type list
+  const TYPES = [
+    "Normal", "Fire", "Water", "Grass", "Electric", "Ice",
+    "Fighting", "Poison", "Ground", "Flying", "Psychic",
+    "Bug", "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
+    "Mystery/Typeless", "Uno", "Deez Nuts"
+  ];
+
+  function populateSelect(select) {
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = "—";
+    select.appendChild(empty);
+
+    for (const type of TYPES) {
+      const option = document.createElement("option");
+      option.value = type;
+      option.textContent = type;
+      select.appendChild(option);
+    }
+
+    select.addEventListener("change", calculate);
+  }
+
+  document.querySelectorAll("select").forEach(populateSelect);
+
+  async function calculate() {
+    const attackers = [...document.querySelectorAll("#attack-column select")]
+      .map(s => s.value)
+      .filter(Boolean);
+
+    const defenders = [...document.querySelectorAll("#defence-column select")]
+      .map(s => s.value)
+      .filter(Boolean);
+
+    if (attackers.length === 0 || defenders.length === 0) {
+      document.getElementById("result").textContent = "—";
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/attack`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attackers: attackers,
+          defenders: defenders
+        })
+      });
+
+      const data = await response.json();
+      document.getElementById("result").textContent = `${data.multiplier}×`;
+    } catch {
+      document.getElementById("result").textContent = "ERR";
+    }
+  }
+</script>
+
+</body>
+</html>
