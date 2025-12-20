@@ -18,6 +18,10 @@ def attack_route():
 def coverage_route():
     return jsonify(coverage(request.json["moves"]))
 
+@app.route("/team-coverage", methods=["POST"])
+def team_coverage_route():
+    return jsonify(team_coverage(request.json["pokemons"]))
+
 @app.route("/defence", methods=["POST"])
 def defence_route():
     return jsonify(defence(request.json["types"]))
