@@ -101,15 +101,20 @@
 </main>
 
 <script>
-  // 🔧 CHANGE THIS to your hosted backend URL
-  const API_BASE = "https://your-backend.example.com";
-
   // Replace with your actual type list
   const TYPES = [
-    "Normal", "Fire", "Water", "Grass", "Electric", "Ice",
-    "Fighting", "Poison", "Ground", "Flying", "Psychic",
-    "Bug", "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
-    "Mystery/Typeless", "Uno", "Deez Nuts"
+    'Normal', 'Fighting', 'Flying', 'Poison', 'Ground', 'Rock', 'Bug',
+    'Ghost', 'Steel', 'Mystery/Typeless', 'Fire', 'Water', 'Grass',
+    'Electric', 'Psychic', 'Ice', 'Dragon', 'Dark', 'Fairy', 'Stellar',
+    'Ancient', 'Anime', 'Baby', 'Ball', 'Bean', 'Bird', 'Brat', 'Boring',
+    'Cat', 'Crab', 'Dance', 'Deez Nuts', 'Emerald', 'Family', 'Fast',
+    'Firefight', 'Florida', 'Fluffy', 'Food', 'Freak', 'Friend', 'Frog',
+    'Furry', 'Future', 'Gamer', 'Gaslight', 'Gatekeep', 'Gender',
+    'Girlboss', 'Goblin', 'Goku', 'Gun', 'Guys', 'Hater', 'Holy', 'Kaiju',
+    'Little', 'Magic', 'Mario', 'Monke', 'Ninja', 'Pikachu', 'Rat',
+    'Reddit', 'Sans', 'Sharp', 'Silly', 'Song', 'Space', 'Stinky', 'Sus',
+    'Thing', 'Ugly', 'Unalive', 'Uno', 'Vgc', 'Vibes', 'Wealth', 'Yapper',
+    'Every'
   ];
 
   function populateSelect(select) {
@@ -145,7 +150,7 @@
     }
 
     try {
-      const response = await fetch(`${API_BASE}/attack`, {
+      const response = await fetch("/attack", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
