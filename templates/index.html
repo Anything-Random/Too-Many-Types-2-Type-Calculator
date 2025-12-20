@@ -349,8 +349,8 @@ function renderTable(container, data) {
     const td = document.createElement("td");
     
     // Color coding for readability
-    if(val > 1) td.style.color = "#ff6b6b"; // Red-ish for super effective
-    if(val < 1) td.style.color = "#51cf66"; // Green-ish for not effective
+    if(val > 1) td.style.color = "#51cf66"; // Green-ish for super effective
+    if(val < 1) td.style.color = "#ff6b6b"; // Red-ish for not effective
     
     td.textContent = val + "×";
     tr1.appendChild(th);
