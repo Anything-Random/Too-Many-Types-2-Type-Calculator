@@ -60,9 +60,9 @@ def team_coverage(pokemons: list[list[list[str]]]) -> dict:
 def defence(types: list[str]) -> dict:
     defences = dict.fromkeys(sheet[types[0]].to_dict(), 0.0)
     #match_ups = {}
-    #for t in defences.keys():
-    #    effectiveness = attack([t], types)
-    #    defences[t] = effectiveness
+    for t in defences.keys():
+        effectiveness = attack([t], types)
+        defences[t] = effectiveness
     #    if effectiveness in match_ups.keys():
     #        match_ups[effectiveness].append(t)
     #    else:
