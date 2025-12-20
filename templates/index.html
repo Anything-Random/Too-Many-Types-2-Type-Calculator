@@ -42,13 +42,6 @@ header button.active {
   color: #ccc;
 }
 
-main {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: calc(100vh - 220px);
-}
-  
 .view {
   display: none;
 }
@@ -153,14 +146,14 @@ select {
     me in the Too Many Productions discord @anything_random.
   </p>
 </div>
-<main id="matchup" class="view active">
+
 <!-- ================= MOVE EFFECTIVENESS ================= -->
 <div id="matchup" class="view active">
-  <h2 id="matchup" class="view active" style="text-align:center;">Move Effectiveness</h2>
-  <div id="matchup" class="calculator">
+  <h2 style="text-align:center;">Move Effectiveness</h2>
+  <div class="calculator">
     <!-- Attack types -->
-    <div id="matchup" class="column view active" id="attack-column">
-      <h2 id="matchup" class="view active">Attack Type(s)</h2>
+    <div class="column" id="attack-column">
+      <h2>Attack Type(s)</h2>
       <select></select>
       <select></select>
       <select></select>
@@ -168,11 +161,11 @@ select {
     </div>
 
     <!-- Result -->
-    <div id="matchup" class="result view active" id="result">1×</div>
+    <div class="result" id="result">1×</div>
 
     <!-- Defence types -->
-    <div id="matchup" class="column view active" id="defence-column">
-      <h2 id="matchup" class="view active">Defence Type(s)</h2>
+    <div class="column" id="defence-column">
+      <h2>Defence Type(s)</h2>
       <select></select>
       <select></select>
       <select></select>
@@ -180,7 +173,7 @@ select {
     </div>
   </div>
 </div>
-</main>
+
 <!-- ================= TEAM COVERAGE ================= -->
 <div id="team" class="view">
   <h2 style="text-align:center;">Team Coverage</h2>
@@ -195,6 +188,7 @@ select {
   <h2 style="text-align:center;">Defensive Match-Up</h2>
   <p>(To be implemented later)</p>
 </div>
+
 <script>
 /* ===================== CONSTANTS ===================== */
 
