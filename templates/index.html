@@ -209,6 +209,55 @@ const MOVES_PER_POKEMON = 4;
 
 /* ===================== HELPERS ===================== */
 
+function populateSelect(select) {
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = "—";
+    select.appendChild(empty);
+
+    for (const type of TYPES) {
+      const option = document.createElement("option");
+      option.value = type;
+      option.textContent = type;
+      select.appendChild(option);
+    }
+
+    select.addEventListener("change", calculate);
+}
+
+document.querySelectorAll("select").forEach(populateSelect);
+
+async function calculate() {
+    const attackers = [...document.querySelectorAll("#attack-column select")]
+      .map(s => s.value)
+      .filter(Boolean);
+
+    const defenders = [...document.querySelectorAll("#defence-column select")]
+      .map(s => s.value)
+      .filter(Boolean);
+
+    if (attackers.length === 0 || defenders.length === 0) {
+      document.getElementById("result").textContent = "—";
+      return;
+    }
+
+    try {
+      const response = await fetch("/attack", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attackers: attackers,
+          defenders: defenders
+        })
+      });
+
+      const data = await response.json();
+      document.getElementById("result").textContent = `${data.multiplier}×`;
+    } catch {
+      document.getElementById("result").textContent = "ERR";
+    }
+}
+  
 function makeTypeSelect() {
   const s = document.createElement("select");
   const blank = document.createElement("option");
