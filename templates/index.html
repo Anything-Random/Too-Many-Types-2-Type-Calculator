@@ -403,7 +403,7 @@ function renderTable(container, data) {
     // Slight bold for important multipliers
     if(val !== 1) valueDiv.style.fontWeight = "bold";
 
-    valueDiv.textContent = parseFloat(val).toFixed(2) + "×";
+    valueDiv.textContent = val + "×";
 
     cell.appendChild(header);
     cell.appendChild(valueDiv);
