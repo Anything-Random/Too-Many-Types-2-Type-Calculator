@@ -53,7 +53,6 @@ header button.active {
   transition: max-width 0.3s ease; /* Smooth transition when resizing */
 }
 
-/* We add this class via JS when switching to Team or Defence tab */
 .container.wide {
   max-width: 95%; 
 }
@@ -93,13 +92,20 @@ select {
   box-sizing: border-box;
 }
 
-/* ================= RESULT GRIDS (Replaces Tables) ================= */
+/* ================= RESULT GRIDS ================= */
+.group-header {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  color: #ccc;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.2rem;
+}
+
 .coverage-grid {
   display: grid;
-  /* Minimum 85px wide per cell, fitting as many as possible per row */
   grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
   gap: 4px; 
-  margin-top: 1rem;
 }
 
 .type-cell {
@@ -117,7 +123,7 @@ select {
   border-bottom: 1px solid #444;
   white-space: nowrap; 
   overflow: hidden;
-  text-overflow: ellipsis; /* Handle long names like Mystery/Typeless */
+  text-overflow: ellipsis; 
   font-weight: bold;
 }
 
@@ -219,15 +225,15 @@ select {
       </p>
       <p>
         <em>Disclaimer:</em> I have no idea how the multi-type attacks work in
-        this game, so I gave it my best guess. I just calculated the
+        this game, so I gave it my best guess. I calculated the
         type effectiveness of each attack type individually against a
         defending pokemon and then multiplied them together. I allowed
         defending pokemon to have up to 4 types to account for
         type-adding moves. I wasn't sure how many types an attack can
-        have, so I only allowed for 2. I assume that the Uno type
+        have, so I only allowed for 2. I also assume that the Uno type
         works by taking the reciprocal of the normal type effectiveness
-        (i.e., 0.5x becomes 1/0.5 = 2x), and immunity just becomes 2x.
-        Also, I wasn't sure how the Every type works, it seems like
+        (i.e., 0.5x becomes 1/0.5 = 2x), and immunity becomes 2x.
+        I wasn't sure how the Every type works, it seems like
         it has some special functionality, but I just used the numbers
         presented in the type chart and I will update it if any new
         info becomes available.
@@ -267,7 +273,6 @@ select {
         <strong>How to use:</strong> Select up to 4 move types for a team of up to 6 pokemon.
         Under each pokemon you can see their individual type coverage, and at the bottom you
         can see your entire team's type coverage.
-        Remember that you can begin typing with a dropdown box selected to find a type.
       </p>
     </div>
     
@@ -345,7 +350,7 @@ function populateSelect(select, callback) {
     if(callback) select.addEventListener("change", callback);
 }
 
-// Populate Matchup Tab (includes both attack and defence selects)
+// Populate Matchup Tab
 document.querySelectorAll("#matchup select").forEach(s => populateSelect(s, calculateMatchup));
 
 // Specific Logic for Attack Column Toggle
@@ -368,7 +373,6 @@ for(let i=0; i<4; i++) {
 /* ===================== LOGIC: MATCHUP ===================== */
 
 async function calculateMatchup() {
-    // 1. Get Attackers using specific IDs
     const s1 = document.getElementById("atk-s1");
     const s2 = document.getElementById("atk-s2");
     const dual = document.getElementById("atk-dual");
@@ -377,7 +381,6 @@ async function calculateMatchup() {
     if (s1.value) attackers.push(s1.value);
     if (dual.checked && s2.value) attackers.push(s2.value);
 
-    // 2. Get Defenders (Still using loop for the 4 static selects)
     const defenders = [...document.querySelectorAll("#defence-column select")]
       .map(s => s.value).filter(Boolean);
 
@@ -423,44 +426,71 @@ async function calculateDefence() {
     } catch (e) { console.error(e); }
 }
 
-/* ===================== SHARED: GRID RENDERER ===================== */
+/* ===================== SHARED: DYNAMIC GROUP RENDERER ===================== */
 
 function renderTable(container, data, isDefence = false) {
   container.innerHTML = "";
   if (!data || Object.keys(data).length === 0) return;
 
-  const grid = document.createElement("div");
-  grid.className = "coverage-grid";
-
-  Object.keys(data).sort().forEach(type => {
-    const val = data[type];
-    const cell = document.createElement("div");
-    cell.className = "type-cell";
-
-    const header = document.createElement("div");
-    header.className = "type-header";
-    header.textContent = type;
-    header.title = type;
-
-    const valueDiv = document.createElement("div");
-    valueDiv.className = "type-value";
-    
-    // COLOR LOGIC
-    if (isDefence) {
-        if(val > 1) valueDiv.style.color = "#ff6b6b"; 
-        if(val < 1) valueDiv.style.color = "#51cf66"; 
-    } else {
-        if(val > 1) valueDiv.style.color = "#51cf66"; 
-        if(val < 1) valueDiv.style.color = "#ff6b6b"; 
-    }
-    
-    if(val !== 1) valueDiv.style.fontWeight = "bold";
-    valueDiv.textContent = val + "×";
-    cell.append(header, valueDiv);
-    grid.appendChild(cell);
+  // 1. Group Data by Value
+  const groups = {};
+  Object.keys(data).forEach(type => {
+      const val = data[type];
+      // Store by string key to ensure simple equality grouping
+      if(!groups[val]) groups[val] = [];
+      groups[val].push(type);
   });
 
-  container.appendChild(grid);
+  // 2. Sort Values Ascending (0 -> 4)
+  const sortedValues = Object.keys(groups).sort((a,b) => parseFloat(a) - parseFloat(b));
+
+  // 3. Render Each Group
+  sortedValues.forEach(valString => {
+      const val = parseFloat(valString);
+      const types = groups[valString].sort(); // Alphabetical sort inside group
+
+      // Create Section Header
+      const header = document.createElement("h3");
+      header.className = "group-header";
+      // Format number: Remove .00 if integer (2×), otherwise 2 decimals (0.25×)
+      const label = Number.isInteger(val) ? val : val.toFixed(2);
+      header.textContent = `${label}×`;
+      
+      // Create Grid for this group
+      const grid = document.createElement("div");
+      grid.className = "coverage-grid";
+
+      types.forEach(type => {
+        const cell = document.createElement("div");
+        cell.className = "type-cell";
+
+        const typeHeader = document.createElement("div");
+        typeHeader.className = "type-header";
+        typeHeader.textContent = type;
+        typeHeader.title = type;
+
+        const valueDiv = document.createElement("div");
+        valueDiv.className = "type-value";
+        
+        // Color Logic
+        if (isDefence) {
+            if(val > 1) valueDiv.style.color = "#ff6b6b"; 
+            if(val < 1) valueDiv.style.color = "#51cf66"; 
+        } else {
+            if(val > 1) valueDiv.style.color = "#51cf66"; 
+            if(val < 1) valueDiv.style.color = "#ff6b6b"; 
+        }
+        
+        if(val !== 1) valueDiv.style.fontWeight = "bold";
+        valueDiv.textContent = `${label}×`;
+
+        cell.append(typeHeader, valueDiv);
+        grid.appendChild(cell);
+      });
+
+      container.appendChild(header);
+      container.appendChild(grid);
+  });
 }
 
 /* ===================== LOGIC: TEAM ===================== */
@@ -577,7 +607,6 @@ async function calculateTeam() {
 
 document.querySelectorAll("header button").forEach(btn => {
   btn.onclick = () => {
-    // 1. Handle Active States
     document.querySelectorAll("header button").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
 
@@ -586,7 +615,6 @@ document.querySelectorAll("header button").forEach(btn => {
     const viewElement = document.getElementById(viewId);
     if (viewElement) viewElement.classList.add("active");
 
-    // 2. Handle Container Width (Team & Defence need Wide view)
     const mainContainer = document.getElementById("main-container");
     if (viewId === 'team' || viewId === 'defence') {
         mainContainer.classList.add("wide");
@@ -594,7 +622,6 @@ document.querySelectorAll("header button").forEach(btn => {
         mainContainer.classList.remove("wide");
     }
 
-    // 3. Lazy Load Logic
     if (viewId === "team") buildTeamUI();
   };
 });
