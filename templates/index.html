@@ -603,15 +603,17 @@ function makeTypeSelect() {
     return s;
 }
 
-async function clearFullTeam() {
-    const container = document.getElementById("team-container");
-    const blocks = container.querySelectorAll("div[data-pokemon-block]");
-
-    for (let i = 0; i < blocks.length; i++) {
-        // Change: Use await to ensure one pokemon is fully cleared and
-        // the UI updated before starting the next one.
-        await clearSinglePokemon(i);
-    }
+function clearFullTeam() {
+    const rows = document.querySelectorAll("#team-container > div[data-pokemon-block]");
+    rows.forEach(row => {
+        row._moves.forEach(m => {
+            m.s1.value = "";
+            m.s2.value = "";
+            m.cb.checked = false;
+            m.s2.style.display = "none";
+        });
+    });
+    calculateTeam(); // This will send one "empty" request and clear all tables
 }
 
 async function clearSinglePokemon(index) {
@@ -708,63 +710,41 @@ function buildTeamUI() {
 }
 
 async function calculateTeam() {
-  const rows = document.querySelectorAll("#team-container > div[data-pokemon-block]");
-  const team = [];
-  const teamTotalDiv = document.getElementById("team-total");
+    const rows = document.querySelectorAll("#team-container > div[data-pokemon-block]");
+    const fullTeamInputs = [];
 
-  for (let i = 0; i < rows.length; i++) {
-    const moves = [];
-    const pokemonResultDiv = document.getElementById(`pokemon-${i}`);
-
-    if (!rows[i]._moves) continue;
-
-    for (const m of rows[i]._moves) {
-      if (!m.s1.value) continue;
-      if (m.cb.checked && m.s2.value)
-        moves.push([m.s1.value, m.s2.value]);
-      else
-        moves.push([m.s1.value]);
-    }
-
-    // If no moves are selected, clear this Pokemon's table
-    // and move to the next one without exiting the whole function.
-    if (moves.length === 0) {
-        if (pokemonResultDiv) pokemonResultDiv.innerHTML = "";
-        continue;
-    }
-
-    team.push(moves);
-
-    try {
-      const res = await fetch("/coverage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moves })
-      });
-      const coverageData = await res.json();
-      renderTable(pokemonResultDiv, coverageData);
-    } catch (e) {
-        console.error("Error calculating individual coverage:", e);
-    }
-  }
-
-  // Ensure the bottom table is cleared if the team is empty
-  if (team.length === 0) {
-      if (teamTotalDiv) teamTotalDiv.innerHTML = "";
-      return;
-  }
-
-  try {
-    const teamRes = await fetch("/team-coverage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pokemons: team })
+    // 1. Gather all data locally first (No Network)
+    rows.forEach(row => {
+        const moves = [];
+        row._moves.forEach(m => {
+            if (m.s1.value) {
+                moves.push(m.cb.checked && m.s2.value ? [m.s1.value, m.s2.value] : [m.s1.value]);
+            }
+        });
+        fullTeamInputs.push(moves);
     });
-    const totalData = await teamRes.json();
-    renderTable(teamTotalDiv, totalData);
-  } catch (e) {
-      console.error("Error calculating team coverage:", e);
-  }
+
+    // 2. Single API Call for everything
+    try {
+        const res = await fetch("/team-coverage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pokemons: fullTeamInputs })
+        });
+        const { individual, total } = await res.json();
+
+        // 3. Update the UI all at once
+        individual.forEach((data, i) => {
+            const div = document.getElementById(`pokemon-${i}`);
+            if (data) renderTable(div, data);
+            else div.innerHTML = "";
+        });
+
+        const totalDiv = document.getElementById("team-total");
+        if (total) renderTable(totalDiv, total);
+        else totalDiv.innerHTML = "";
+
+    } catch (e) { console.error(e); }
 }
 
 /* ===================== SPA NAV ===================== */

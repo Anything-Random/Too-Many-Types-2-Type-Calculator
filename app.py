@@ -20,7 +20,27 @@ def coverage_route():
 
 @app.route("/team-coverage", methods=["POST"])
 def team_coverage_route():
-    return jsonify(team_coverage(request.json["pokemons"]))
+    data = request.json
+    pokemons = data.get("pokemons", [])
+
+    results = {
+        "individual": [],
+        "total": None
+    }
+
+    # Calculate each active pokemon
+    for moves in pokemons:
+        if moves:
+            results["individual"].append(coverage(moves))
+        else:
+            results["individual"].append(None)
+
+    # Calculate the full team if there's at least one move
+    active_pokes = [p for p in pokemons if p]
+    if active_pokes:
+        results["total"] = team_coverage(active_pokes)
+
+    return jsonify(results)
 
 @app.route("/defence", methods=["POST"])
 def defence_route():
