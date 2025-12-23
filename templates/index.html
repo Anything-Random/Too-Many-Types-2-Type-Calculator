@@ -224,20 +224,18 @@ select {
         Remember that you can begin typing with a dropdown box selected to find a type.
       </p>
       <p>
-        <em>Disclaimer:</em> I have no idea how the multi-type attacks work in
+        <em>Disclaimer:</em> I'm not sure how the multi-type attacks work in
         this game, so I gave it my best guess. I calculated the
-        type effectiveness of each attack type individually against a
-        defending pokemon and then multiplied them together. I allowed
+        type effectiveness of each attack type individually and then
+        multiplied them together. I wasn't sure how many types an attack can
+        have, so I only allowed for 2. I allowed
         defending pokemon to have up to 4 types to account for
-        type-adding moves. I wasn't sure how many types an attack can
-        have, so I only allowed for 2. I also assume that the Uno Reverse type
-        works by taking the reciprocal of the normal type effectiveness
-        (i.e., 0.5x becomes 1/0.5 = 2x), and immunity becomes 2x.
-        I wasn't sure how the Every type works, it seems like
-        it has some special functionality, but I just used the numbers
-        presented in the type chart and I will update it if any new
-        info becomes available.
-        If anyone has any corrections on how this works they can message
+        type-adding moves. I also assume that the Uno type
+        works by taking the reciprocal of the normal type effectiveness,
+        and immunity becomes 2x.
+        I wasn't sure how the Every type works, but I just used the numbers
+        presented in the type chart.
+        If anyone has any corrections or suggestions they can message
         me in the Too Many Productions discord @anything_random.
       </p>
     </div>
@@ -246,7 +244,7 @@ select {
       <div class="column" id="attack-column">
         <h2>Attacking Move Type(s)</h2>
         <select id="atk-s1"></select>
-        
+
         <div style="display:flex; align-items:center; gap:0.5rem;">
             <input type="checkbox" id="atk-dual">
             <label for="atk-dual" style="cursor:pointer; font-size:0.9rem;">Dual Type?</label>
@@ -275,7 +273,7 @@ select {
         can see your entire team's type coverage.
       </p>
     </div>
-    
+
     <h2 style="text-align:center; margin-bottom: 1.5rem;">Team Coverage</h2>
     <div id="team-container"></div>
 
@@ -288,8 +286,8 @@ select {
   <div id="defence" class="view">
     <div class="description" style="text-align: left; font-size: 0.95rem;">
         <p>
-          <strong>How to use:</strong> Select up to 4 types for your pokemon. 
-          The grid below will show how effective every attack type is against it.
+          <strong>How to use:</strong> Search for a Pokemon below OR select up to 4 types manually.
+          The grid below will show how effective every type is against it.
         </p>
         <p>
             Colours are reversed from the Team Coverage page:<br>
@@ -300,6 +298,14 @@ select {
 
     <div style="max-width: 500px; margin: 0 auto; background: #1a1a1a; padding: 2rem; border-radius: 8px; border: 1px solid #333;">
         <h2 style="margin-top:0; text-align:center;">Your Pokemon's Type(s)</h2>
+
+        <div style="display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1.5rem;">
+            <input type="text" id="poke-search" list="pokemon-list" placeholder="Search Pokemon..."
+                style="padding: 0.5rem; width: 70%; border-radius: 4px; border: 1px solid #444; background: #222; color: #eee;">
+            <button onclick="searchPokemon()" style="padding: 0.5rem 1rem; border: none; background: #007acc; color: white; border-radius: 4px; cursor: pointer;">Search</button>
+        </div>
+        <datalist id="pokemon-list"></datalist>
+
         <div class="column" id="defence-input-column">
             </div>
     </div>
@@ -310,7 +316,7 @@ select {
     </div>
   </div>
 
-</div> 
+</div>
 
 <script>
 /* ===================== CONSTANTS ===================== */
@@ -370,13 +376,64 @@ for(let i=0; i<4; i++) {
     defenceInputCol.appendChild(s);
 }
 
+// ===================== POKEMON SEARCH LOGIC =====================
+
+// Load Pokemon Names on Startup
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await fetch("/pokemon-list");
+        const names = await res.json();
+        const datalist = document.getElementById("pokemon-list");
+        names.forEach(name => {
+            const opt = document.createElement("option");
+            opt.value = name;
+            datalist.appendChild(opt);
+        });
+    } catch (e) { console.error("Could not load pokemon list", e); }
+});
+
+async function searchPokemon() {
+    const name = document.getElementById("poke-search").value;
+    if(!name) return;
+
+    try {
+        const res = await fetch("/get-types", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pokemon: name })
+        });
+        const data = await res.json();
+        const types = data.types;
+
+        // Reset all selects
+        const selects = document.querySelectorAll("#defence-input-column select");
+        selects.forEach(s => s.value = "");
+
+        // Populate selects with returned types
+        if(types && types.length > 0) {
+            types.forEach((t, index) => {
+                if(index < selects.length) {
+                    selects[index].value = t;
+                }
+            });
+            // Automatically run calculation
+            await calculateDefence();
+        } else {
+            alert("Pokemon not found or no types data available.");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error fetching Pokemon data");
+    }
+}
+
 /* ===================== LOGIC: MATCHUP ===================== */
 
 async function calculateMatchup() {
     const s1 = document.getElementById("atk-s1");
     const s2 = document.getElementById("atk-s2");
     const dual = document.getElementById("atk-dual");
-    
+
     const attackers = [];
     if (s1.value) attackers.push(s1.value);
     if (dual.checked && s2.value) attackers.push(s2.value);
@@ -395,19 +452,22 @@ async function calculateMatchup() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ attackers, defenders })
       });
-      const data = await response.json();
-      document.getElementById("result").textContent = `${data.multiplier}×`;
+
+      // Destructure the multiplier property directly from the JSON
+      const { multiplier } = await response.json();
+
+      document.getElementById("result").textContent = `${multiplier}×`;
     } catch {
       document.getElementById("result").textContent = "ERR";
     }
 }
-  
+
 /* ===================== LOGIC: DEFENCE ===================== */
 
 async function calculateDefence() {
     const types = [...document.querySelectorAll("#defence-input-column select")]
         .map(s => s.value).filter(Boolean);
-    
+
     const resultDiv = document.getElementById("defence-results");
 
     if(types.length === 0) {
@@ -422,7 +482,7 @@ async function calculateDefence() {
             body: JSON.stringify({ types })
         });
         const data = await response.json();
-        renderTable(resultDiv, data, true); 
+        renderTable(resultDiv, data, true);
     } catch (e) { console.error(e); }
 }
 
@@ -436,27 +496,23 @@ function renderTable(container, data, isDefence = false) {
   const groups = {};
   Object.keys(data).forEach(type => {
       const val = data[type];
-      // Store by string key to ensure simple equality grouping
       if(!groups[val]) groups[val] = [];
       groups[val].push(type);
   });
 
-  // 2. Sort Values Ascending (0 -> 4)
+  // 2. Sort Values Ascending
   const sortedValues = Object.keys(groups).sort((a,b) => parseFloat(a) - parseFloat(b));
 
   // 3. Render Each Group
   sortedValues.forEach(valString => {
       const val = parseFloat(valString);
-      const types = groups[valString].sort(); // Alphabetical sort inside group
+      const types = groups[valString].sort();
 
-      // Create Section Header
       const header = document.createElement("h3");
       header.className = "group-header";
-      // Format number: Remove .00 if integer (2×), otherwise 2 decimals (0.25×)
       const label = Number.isInteger(val) ? val : val.toFixed(2);
       header.textContent = `${label}×`;
-      
-      // Create Grid for this group
+
       const grid = document.createElement("div");
       grid.className = "coverage-grid";
 
@@ -471,16 +527,15 @@ function renderTable(container, data, isDefence = false) {
 
         const valueDiv = document.createElement("div");
         valueDiv.className = "type-value";
-        
-        // Color Logic
+
         if (isDefence) {
-            if(val > 1) valueDiv.style.color = "#ff6b6b"; 
-            if(val < 1) valueDiv.style.color = "#51cf66"; 
+            if(val > 1) valueDiv.style.color = "#ff6b6b";
+            if(val < 1) valueDiv.style.color = "#51cf66";
         } else {
-            if(val > 1) valueDiv.style.color = "#51cf66"; 
-            if(val < 1) valueDiv.style.color = "#ff6b6b"; 
+            if(val > 1) valueDiv.style.color = "#51cf66";
+            if(val < 1) valueDiv.style.color = "#ff6b6b";
         }
-        
+
         if(val !== 1) valueDiv.style.fontWeight = "bold";
         valueDiv.textContent = `${label}×`;
 
@@ -523,7 +578,7 @@ function buildTeamUI() {
 
     for (let m = 0; m < MOVES_PER_POKEMON; m++) {
       const line = document.createElement("div");
-      line.className = "move-row"; 
+      line.className = "move-row";
       const label = document.createElement("span");
       label.textContent = `Move ${m + 1}:`;
       label.style.minWidth = "60px";
@@ -575,7 +630,7 @@ async function calculateTeam() {
         moves.push([m.s1.value]);
     }
     if (moves.length === 0) {
-        document.getElementById(`pokemon-${i}`).innerHTML = ""; 
+        document.getElementById(`pokemon-${i}`).innerHTML = "";
         continue;
     }
     team.push(moves);

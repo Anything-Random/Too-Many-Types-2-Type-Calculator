@@ -12,11 +12,8 @@ def configure_types_2():
     sheet.to_pickle('Type_Chart_2.pickle')
 
 def configure_dex():
-    sheet = pd.read_csv("2 Many Types Spreadsheet - Dex.csv")
-    dex = sheet['Name']
-    sheet.drop('Name', axis=1, inplace=True)
-    sheet.index = dex
-    sheet.to_pickle('Dex.pickle')
+    dex = pd.read_csv("2 Many Types Spreadsheet - Dex.csv", index_col='Name')
+    dex.to_pickle('Dex.pickle')
 
 def configure_types():
     sheet = pd.read_csv("Too Many Types Spreadsheet - Type Chart.csv")

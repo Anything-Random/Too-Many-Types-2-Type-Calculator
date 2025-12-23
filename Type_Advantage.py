@@ -5,7 +5,16 @@ sheet = pd.read_pickle('Type_Chart_2.pickle')
 dex = pd.read_pickle('Dex.pickle')
 
 def pokemon_to_types(pokemon: str) -> list[str]:
-     return [t for t in dex.loc[pokemon] if type(t) == str]
+    # Case-insensitive match
+    lower_map = {n.lower(): n for n in dex.index}
+    if pokemon.lower() in lower_map:
+        real_name = lower_map[pokemon.lower()]
+        return [t for t in dex.loc[real_name].values if isinstance(t, str)]
+
+    return []
+
+def get_all_pokemon_names() -> list[str]:
+    return dex.index.tolist()
 
 def attack(atks: list[str], defs: list[str]) -> float:
     if 1 > len(defs) > 4 or 1 > len(atks) > 4:

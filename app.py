@@ -26,5 +26,15 @@ def team_coverage_route():
 def defence_route():
     return jsonify(defence(request.json["types"]))
 
+@app.route("/pokemon-list", methods=["GET"])
+def pokemon_list_route():
+    return jsonify(get_all_pokemon_names())
+
+@app.route("/get-types", methods=["POST"])
+def get_types_route():
+    pokemon_name = request.json.get("pokemon")
+    types = pokemon_to_types(pokemon_name)
+    return jsonify({"types": types})
+
 if __name__ == "__main__":
     app.run()
