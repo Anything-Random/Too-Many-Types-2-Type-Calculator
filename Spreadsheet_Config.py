@@ -9,6 +9,8 @@ sheet.drop('Unnamed: 0', axis=1, inplace=True)
 sheet.columns = types
 sheet.to_pickle('Type_Chart_2.pickle')
 
+'''
+sheet = pd.read_csv("Too Many Types Spreadsheet - Type Chart.csv")
 types = sheet['Unnamed: 1'].to_dict()
 sheet.drop(['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 65'], axis=1, inplace=True)
 for i in types.keys():
@@ -19,3 +21,4 @@ sheet.columns = types.values()
 for i in sheet.columns:
     sheet[i] = pd.to_numeric(sheet[i])
 sheet.to_pickle('Type_Chart.pickle')
+'''
