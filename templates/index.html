@@ -588,6 +588,21 @@ function renderTable(container, data, isDefence = false) {
 
 /* ===================== LOGIC: TEAM ===================== */
 
+function makeTypeSelect() {
+    const s = document.createElement("select");
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = "—";
+    s.appendChild(blank);
+    TYPES.forEach(t => {
+        const o = document.createElement("option");
+        o.value = t;
+        o.textContent = t;
+        s.appendChild(o);
+    });
+    return s;
+}
+
 function clearFullTeam() {
     const container = document.getElementById("team-container");
     const blocks = container.querySelectorAll("div[data-pokemon-block]");
