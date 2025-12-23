@@ -214,7 +214,7 @@ select {
     
     <div class="description" style="text-align: left; font-size: 0.95rem;">
       <p>
-        <strong>How to use:</strong> Select up to four types on each side to see how they interact.
+        <strong>How to use:</strong> Select up to two types for the attack, and four types for the defense.
         Remember that you can begin typing with a dropdown box selected to find a type.
       </p>
       <p>
@@ -224,12 +224,12 @@ select {
         defending pokemon and then multiplied them together. I allowed
         defending pokemon to have up to 4 types to account for
         type-adding moves. I wasn't sure how many types an attack can
-        have, so I just made it symmetrical. I assume that the Uno type
+        have, so I only allowed for 2. I assume that the Uno type
         works by taking the reciprocal of the normal type effectiveness
         (i.e., 0.5x becomes 1/0.5 = 2x), and immunity just becomes 2x.
         Also, I wasn't sure how the Every type works, it seems like
         it has some special functionality, but I just used the numbers
-        presented in the type chart and I will update it when any new
+        presented in the type chart and I will update it if any new
         info becomes available.
         If anyone has any corrections on how this works they can message
         me in the Too Many Productions discord @anything_random.
@@ -239,10 +239,14 @@ select {
     <div class="calculator">
       <div class="column" id="attack-column">
         <h2>Attacking Move Type(s)</h2>
-        <select></select>
-        <select></select>
-        <select></select>
-        <select></select>
+        <select id="atk-s1"></select>
+        
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+            <input type="checkbox" id="atk-dual">
+            <label for="atk-dual" style="cursor:pointer; font-size:0.9rem;">Dual Type?</label>
+        </div>
+
+        <select id="atk-s2" style="display:none;"></select>
       </div>
 
       <div class="result" id="result">—</div>
@@ -263,8 +267,6 @@ select {
         <strong>How to use:</strong> Select up to 4 move types for a team of up to 6 pokemon.
         Under each pokemon you can see their individual type coverage, and at the bottom you
         can see your entire team's type coverage.
-        For convenience's sake, I've used the more conversative assumption that a move can
-        have at most two types here. I'll update it if that turns out to be incorrect.
         Remember that you can begin typing with a dropdown box selected to find a type.
       </p>
     </div>
@@ -343,8 +345,17 @@ function populateSelect(select, callback) {
     if(callback) select.addEventListener("change", callback);
 }
 
-// Populate Matchup Tab
+// Populate Matchup Tab (includes both attack and defence selects)
 document.querySelectorAll("#matchup select").forEach(s => populateSelect(s, calculateMatchup));
+
+// Specific Logic for Attack Column Toggle
+const atkDualCb = document.getElementById("atk-dual");
+const atkS2 = document.getElementById("atk-s2");
+
+atkDualCb.addEventListener("change", () => {
+    atkS2.style.display = atkDualCb.checked ? "block" : "none";
+    calculateMatchup();
+});
 
 // Populate Defence Tab
 const defenceInputCol = document.getElementById("defence-input-column");
@@ -357,8 +368,16 @@ for(let i=0; i<4; i++) {
 /* ===================== LOGIC: MATCHUP ===================== */
 
 async function calculateMatchup() {
-    const attackers = [...document.querySelectorAll("#attack-column select")]
-      .map(s => s.value).filter(Boolean);
+    // 1. Get Attackers using specific IDs
+    const s1 = document.getElementById("atk-s1");
+    const s2 = document.getElementById("atk-s2");
+    const dual = document.getElementById("atk-dual");
+    
+    const attackers = [];
+    if (s1.value) attackers.push(s1.value);
+    if (dual.checked && s2.value) attackers.push(s2.value);
+
+    // 2. Get Defenders (Still using loop for the 4 static selects)
     const defenders = [...document.querySelectorAll("#defence-column select")]
       .map(s => s.value).filter(Boolean);
 
@@ -400,7 +419,6 @@ async function calculateDefence() {
             body: JSON.stringify({ types })
         });
         const data = await response.json();
-        // Pass true for isDefence to invert colors
         renderTable(resultDiv, data, true); 
     } catch (e) { console.error(e); }
 }
@@ -429,11 +447,9 @@ function renderTable(container, data, isDefence = false) {
     
     // COLOR LOGIC
     if (isDefence) {
-        // Defence Mode: >1 is BAD (Red), <1 is GOOD (Green)
         if(val > 1) valueDiv.style.color = "#ff6b6b"; 
         if(val < 1) valueDiv.style.color = "#51cf66"; 
     } else {
-        // Offense Mode: >1 is GOOD (Green), <1 is BAD (Red)
         if(val > 1) valueDiv.style.color = "#51cf66"; 
         if(val < 1) valueDiv.style.color = "#ff6b6b"; 
     }
