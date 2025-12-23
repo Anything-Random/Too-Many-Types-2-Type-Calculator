@@ -240,6 +240,15 @@ select {
       </p>
     </div>
 
+    <div id="matchup" class="view active">
+        <div style="text-align: right; margin-bottom: 1rem;">
+            <button onclick="clearMatchup()" style="padding: 0.5rem 1rem; border: none; background: #cc3333; color: white; border-radius: 4px; cursor: pointer; font-weight: bold;">Clear</button>
+        </div>
+
+        <div class="calculator">
+            </div>
+    </div>
+
     <div class="calculator">
       <div class="column" id="attack-column">
         <h2>Attacking Move Type(s)</h2>
@@ -498,6 +507,25 @@ async function calculateMatchup() {
     } catch {
       document.getElementById("result").textContent = "ERR";
     }
+}
+
+function clearMatchup() {
+    // 1. Reset Attacking Section
+    const s1 = document.getElementById("atk-s1");
+    const s2 = document.getElementById("atk-s2");
+    const dual = document.getElementById("atk-dual");
+
+    s1.value = "";
+    s2.value = "";
+    dual.checked = false;
+    s2.style.display = "none";
+
+    // 2. Reset Defence Section
+    const defenders = document.querySelectorAll("#defence-column select");
+    defenders.forEach(s => s.value = "");
+
+    // 3. Reset the Multiplier Result Text
+    document.getElementById("result").textContent = "—";
 }
 
 /* ===================== LOGIC: DEFENCE ===================== */
