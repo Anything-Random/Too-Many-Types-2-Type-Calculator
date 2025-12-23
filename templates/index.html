@@ -603,20 +603,21 @@ function makeTypeSelect() {
     return s;
 }
 
-function clearFullTeam() {
+async function clearFullTeam() {
     const container = document.getElementById("team-container");
     const blocks = container.querySelectorAll("div[data-pokemon-block]");
 
-    blocks.forEach((block, index) => {
-        clearSinglePokemon(index);
-    });
+    for (let i = 0; i < blocks.length; i++) {
+        // Change: Use await to ensure one pokemon is fully cleared and
+        // the UI updated before starting the next one.
+        await clearSinglePokemon(i);
+    }
 }
 
-function clearSinglePokemon(index) {
+async function clearSinglePokemon(index) {
     const block = document.querySelector(`div[data-pokemon-index="${index}"]`);
     if (!block || !block._moves) return;
 
-    // Reset all selects and checkboxes for this pokemon
     block._moves.forEach(m => {
         m.s1.value = "";
         m.s2.value = "";
@@ -624,12 +625,11 @@ function clearSinglePokemon(index) {
         m.s2.style.display = "none";
     });
 
-    // Manually clear the specific result div for this pokemon
     const resultDiv = document.getElementById(`pokemon-${index}`);
     if (resultDiv) resultDiv.innerHTML = "";
 
-    // Refresh the total team calculation
-    calculateTeam();
+    // Use await to ensure calculation finishes before the next step
+    await calculateTeam();
 }
 
 function buildTeamUI() {
