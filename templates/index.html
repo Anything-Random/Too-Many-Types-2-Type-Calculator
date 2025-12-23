@@ -392,6 +392,31 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (e) { console.error("Could not load pokemon list", e); }
 });
 
+// Select the search input
+const pokeSearchInput = document.getElementById("poke-search");
+
+// 1. Submit when an item is selected from the datalist dropdown
+pokeSearchInput.addEventListener('input', function(e) {
+    const val = this.value;
+    // Using .options instead of .childNodes tells the IDE these are Option elements
+    const options = document.getElementById('pokemon-list').options;
+
+    for (let i = 0; i < options.length; i++) {
+        if (options[i].value === val) {
+            searchPokemon();
+            break;
+        }
+    }
+});
+
+// 2. Submit when the "Enter" key is pressed
+pokeSearchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault(); // Prevent form submission if it were in a form
+        searchPokemon();
+    }
+});
+
 async function searchPokemon() {
     const name = document.getElementById("poke-search").value;
     if(!name) return;
@@ -402,28 +427,24 @@ async function searchPokemon() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ pokemon: name })
         });
-        const data = await res.json();
-        const types = data.types;
+        const { types } = await res.json(); // Using destructuring
 
-        // Reset all selects
         const selects = document.querySelectorAll("#defence-input-column select");
+
+        // Reset all selects first
         selects.forEach(s => s.value = "");
 
-        // Populate selects with returned types
         if(types && types.length > 0) {
             types.forEach((t, index) => {
                 if(index < selects.length) {
                     selects[index].value = t;
                 }
             });
-            // Automatically run calculation
+            // Automatically run calculation and wait for it
             await calculateDefence();
-        } else {
-            alert("Pokemon not found or no types data available.");
         }
     } catch (e) {
         console.error(e);
-        alert("Error fetching Pokemon data");
     }
 }
 
