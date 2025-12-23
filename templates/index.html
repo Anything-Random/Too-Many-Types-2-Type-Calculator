@@ -302,7 +302,8 @@ select {
         <div style="display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1.5rem;">
             <input type="text" id="poke-search" list="pokemon-list" placeholder="Search Pokemon..."
                 style="padding: 0.5rem; width: 70%; border-radius: 4px; border: 1px solid #444; background: #222; color: #eee;">
-            <button onclick="searchPokemon()" style="padding: 0.5rem 1rem; border: none; background: #007acc; color: white; border-radius: 4px; cursor: pointer;">Search</button>
+
+            <button onclick="clearSearch()" style="padding: 0.5rem 1rem; border: none; background: #cc3333; color: white; border-radius: 4px; cursor: pointer;">Clear</button>
         </div>
         <datalist id="pokemon-list"></datalist>
 
@@ -378,6 +379,9 @@ for(let i=0; i<4; i++) {
 
 // ===================== POKEMON SEARCH LOGIC =====================
 
+const pokeSearchInput = document.getElementById("poke-search");
+const pokemonDatalist = document.getElementById("pokemon-list");
+
 // Load Pokemon Names on Startup
 window.addEventListener('DOMContentLoaded', async () => {
     try {
@@ -392,14 +396,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (e) { console.error("Could not load pokemon list", e); }
 });
 
-// Select the search input
-const pokeSearchInput = document.getElementById("poke-search");
-
 // 1. Submit when an item is selected from the datalist dropdown
-pokeSearchInput.addEventListener('input', function(e) {
+pokeSearchInput.addEventListener('input', function() {
     const val = this.value;
-    // Using .options instead of .childNodes tells the IDE these are Option elements
-    const options = document.getElementById('pokemon-list').options;
+    const options = pokemonDatalist.options;
 
     for (let i = 0; i < options.length; i++) {
         if (options[i].value === val) {
@@ -412,13 +412,23 @@ pokeSearchInput.addEventListener('input', function(e) {
 // 2. Submit when the "Enter" key is pressed
 pokeSearchInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
-        e.preventDefault(); // Prevent form submission if it were in a form
+        e.preventDefault();
         searchPokemon();
     }
 });
 
+// Function to reset the search and the dropdowns
+function clearSearch() {
+    document.getElementById("poke-search").value = "";
+    const selects = document.querySelectorAll("#defence-input-column select");
+    selects.forEach(s => s.value = "");
+
+    // Clear the results grid
+    document.getElementById("defence-results").innerHTML = "";
+}
+
 async function searchPokemon() {
-    const name = document.getElementById("poke-search").value;
+    const name = pokeSearchInput.value;
     if(!name) return;
 
     try {
@@ -427,7 +437,9 @@ async function searchPokemon() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ pokemon: name })
         });
-        const { types } = await res.json(); // Using destructuring
+
+        // Destructuring to avoid "unresolved variable" warnings
+        const { types } = await res.json();
 
         const selects = document.querySelectorAll("#defence-input-column select");
 
@@ -444,7 +456,7 @@ async function searchPokemon() {
             await calculateDefence();
         }
     } catch (e) {
-        console.error(e);
+        console.error("Error fetching Pokemon data:", e);
     }
 }
 
