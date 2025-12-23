@@ -275,6 +275,11 @@ select {
     </div>
 
     <h2 style="text-align:center; margin-bottom: 1.5rem;">Team Coverage</h2>
+
+    <div style="text-align: right; margin-bottom: 1rem;">
+      <button onclick="clearFullTeam()" style="padding: 0.5rem 1rem; border: none; background: #cc3333; color: white; border-radius: 4px; cursor: pointer; font-weight: bold;">Clear All</button>
+    </div>
+
     <div id="team-container"></div>
 
     <div style="background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border: 1px solid #333; margin-top: 2rem;">
@@ -583,19 +588,30 @@ function renderTable(container, data, isDefence = false) {
 
 /* ===================== LOGIC: TEAM ===================== */
 
-function makeTypeSelect() {
-  const s = document.createElement("select");
-  const blank = document.createElement("option");
-  blank.value = "";
-  blank.textContent = "—";
-  s.appendChild(blank);
-  TYPES.forEach(t => {
-    const o = document.createElement("option");
-    o.value = t;
-    o.textContent = t;
-    s.appendChild(o);
-  });
-  return s;
+function clearFullTeam() {
+    const container = document.getElementById("team-container");
+    const blocks = container.querySelectorAll("div[data-pokemon-block]");
+
+    blocks.forEach((block, index) => {
+        clearSinglePokemon(index);
+    });
+}
+
+function clearSinglePokemon(index) {
+    const block = document.querySelector(`div[data-pokemon-index="${index}"]`);
+    if (!block || !block._moves) return;
+
+    // Reset all selects and checkboxes for this pokemon
+    block._moves.forEach(m => {
+        m.s1.value = "";
+        m.s2.value = "";
+        m.cb.checked = false;
+        m.s2.style.display = "none";
+    });
+
+    // Clear the individual result and refresh the total
+    document.getElementById(`pokemon-${index}`).innerHTML = "";
+    calculateTeam();
 }
 
 function buildTeamUI() {
@@ -606,8 +622,32 @@ function buildTeamUI() {
   for (let p = 0; p < TEAM_SIZE; p++) {
     const block = document.createElement("div");
     block.style.marginBottom = "1.5rem";
+    block.style.position = "relative"; // For button positioning
+    block.setAttribute("data-pokemon-block", "true");
+    block.setAttribute("data-pokemon-index", p);
     block._moves = [];
-    block.innerHTML = `<strong>Pokemon ${p + 1}</strong>`;
+
+    // Header with Individual Clear Button
+    const headerRow = document.createElement("div");
+    headerRow.style.display = "flex";
+    headerRow.style.justifyContent = "space-between";
+    headerRow.style.alignItems = "center";
+    headerRow.style.marginBottom = "1rem";
+    headerRow.innerHTML = `<strong style="margin:0;">Pokemon ${p + 1}</strong>`;
+
+    const clearBtn = document.createElement("button");
+    clearBtn.textContent = "Clear";
+    clearBtn.style.padding = "0.3rem 0.8rem";
+    clearBtn.style.fontSize = "0.8rem";
+    clearBtn.style.background = "#444";
+    clearBtn.style.color = "#eee";
+    clearBtn.style.border = "1px solid #555";
+    clearBtn.style.borderRadius = "4px";
+    clearBtn.style.cursor = "pointer";
+    clearBtn.onclick = () => clearSinglePokemon(p);
+
+    headerRow.appendChild(clearBtn);
+    block.appendChild(headerRow);
 
     for (let m = 0; m < MOVES_PER_POKEMON; m++) {
       const line = document.createElement("div");
@@ -623,6 +663,7 @@ function buildTeamUI() {
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.id = `p${p}m${m}-multi`;
+
       const cbLabel = document.createElement("label");
       cbLabel.textContent = "Dual Type?";
       cbLabel.setAttribute("for", `p${p}m${m}-multi`);
@@ -639,6 +680,7 @@ function buildTeamUI() {
       block._moves.push({ s1, s2, cb });
       block.appendChild(line);
     }
+
     const result = document.createElement("div");
     result.id = `pokemon-${p}`;
     result.style.marginTop = "1rem";
@@ -648,7 +690,7 @@ function buildTeamUI() {
 }
 
 async function calculateTeam() {
-  const rows = document.querySelectorAll("#team-container > div");
+  const rows = document.querySelectorAll("#team-container > div[data-pokemon-block]");
   const team = [];
 
   for (let i = 0; i < rows.length; i++) {
@@ -662,10 +704,12 @@ async function calculateTeam() {
       else
         moves.push([m.s1.value]);
     }
+
     if (moves.length === 0) {
         document.getElementById(`pokemon-${i}`).innerHTML = "";
         continue;
     }
+
     team.push(moves);
     try {
       const res = await fetch("/coverage", {
@@ -673,21 +717,25 @@ async function calculateTeam() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ moves })
       });
-      renderTable(document.getElementById(`pokemon-${i}`), await res.json());
+      const coverageData = await res.json();
+      renderTable(document.getElementById(`pokemon-${i}`), coverageData);
     } catch (e) { console.error(e); }
   }
 
+  const teamTotalDiv = document.getElementById("team-total");
   if (team.length === 0) {
-      document.getElementById("team-total").innerHTML = "";
+      teamTotalDiv.innerHTML = "";
       return;
   }
+
   try {
     const teamRes = await fetch("/team-coverage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pokemons: team })
     });
-    renderTable(document.getElementById("team-total"), await teamRes.json());
+    const totalData = await teamRes.json();
+    renderTable(teamTotalDiv, totalData);
   } catch (e) { console.error(e); }
 }
 
