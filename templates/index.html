@@ -624,8 +624,11 @@ function clearSinglePokemon(index) {
         m.s2.style.display = "none";
     });
 
-    // Clear the individual result and refresh the total
-    document.getElementById(`pokemon-${index}`).innerHTML = "";
+    // Manually clear the specific result div for this pokemon
+    const resultDiv = document.getElementById(`pokemon-${index}`);
+    if (resultDiv) resultDiv.innerHTML = "";
+
+    // Refresh the total team calculation
     calculateTeam();
 }
 
@@ -654,7 +657,7 @@ function buildTeamUI() {
     clearBtn.textContent = "Clear";
     clearBtn.style.padding = "0.3rem 0.8rem";
     clearBtn.style.fontSize = "0.8rem";
-    clearBtn.style.background = "#444";
+    clearBtn.style.background = "#cc3333";
     clearBtn.style.color = "#eee";
     clearBtn.style.border = "1px solid #555";
     clearBtn.style.borderRadius = "4px";
@@ -707,9 +710,12 @@ function buildTeamUI() {
 async function calculateTeam() {
   const rows = document.querySelectorAll("#team-container > div[data-pokemon-block]");
   const team = [];
+  const teamTotalDiv = document.getElementById("team-total");
 
   for (let i = 0; i < rows.length; i++) {
     const moves = [];
+    const pokemonResultDiv = document.getElementById(`pokemon-${i}`);
+
     if (!rows[i]._moves) continue;
 
     for (const m of rows[i]._moves) {
@@ -720,12 +726,15 @@ async function calculateTeam() {
         moves.push([m.s1.value]);
     }
 
+    // If no moves are selected, clear this Pokemon's table
+    // and move to the next one without exiting the whole function.
     if (moves.length === 0) {
-        document.getElementById(`pokemon-${i}`).innerHTML = "";
+        if (pokemonResultDiv) pokemonResultDiv.innerHTML = "";
         continue;
     }
 
     team.push(moves);
+
     try {
       const res = await fetch("/coverage", {
         method: "POST",
@@ -733,13 +742,15 @@ async function calculateTeam() {
         body: JSON.stringify({ moves })
       });
       const coverageData = await res.json();
-      renderTable(document.getElementById(`pokemon-${i}`), coverageData);
-    } catch (e) { console.error(e); }
+      renderTable(pokemonResultDiv, coverageData);
+    } catch (e) {
+        console.error("Error calculating individual coverage:", e);
+    }
   }
 
-  const teamTotalDiv = document.getElementById("team-total");
+  // Ensure the bottom table is cleared if the team is empty
   if (team.length === 0) {
-      teamTotalDiv.innerHTML = "";
+      if (teamTotalDiv) teamTotalDiv.innerHTML = "";
       return;
   }
 
@@ -751,7 +762,9 @@ async function calculateTeam() {
     });
     const totalData = await teamRes.json();
     renderTable(teamTotalDiv, totalData);
-  } catch (e) { console.error(e); }
+  } catch (e) {
+      console.error("Error calculating team coverage:", e);
+  }
 }
 
 /* ===================== SPA NAV ===================== */
