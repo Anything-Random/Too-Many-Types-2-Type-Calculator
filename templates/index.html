@@ -571,7 +571,7 @@ function renderTable(container, data, isDefence = false) {
 
       const header = document.createElement("h3");
       header.className = "group-header";
-      const label = Number.isInteger(val) ? val : val.toFixed(2);
+      const label = val
       header.textContent = `${label}×`;
 
       const grid = document.createElement("div");
