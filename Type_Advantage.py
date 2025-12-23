@@ -2,13 +2,17 @@ import pandas as pd
 import math
 
 sheet = pd.read_pickle('Type_Chart_2.pickle')
-#types = {i:x for (i,x) in zip(range(len(sheet.columns)), sheet.columns)}
+dex = pd.read_pickle('Dex.pickle')
+
+def pokemon_to_types(pokemon: str) -> list[str]:
+     return [t for t in dex.loc[pokemon] if type(t) == str]
+
 def attack(atks: list[str], defs: list[str]) -> float:
     if 1 > len(defs) > 4 or 1 > len(atks) > 4:
         raise Exception('Error: Please enter between 1-4 types for the attacking move and the defending pokemon.')
     result = 1
     for atk in atks:
-        if 'Uno' in defs:
+        if 'Uno Reverse' in defs:
             for t in defs:
                 eff = sheet.loc[atk, t]
                 if eff == 0:
