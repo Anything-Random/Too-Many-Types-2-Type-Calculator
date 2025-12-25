@@ -562,7 +562,6 @@ function renderTable(container, data, isDefence = false) {
   });
 
   // 2. Sort values ascending for Team page and descending for defence page
-  let sortedValues;
 
   const sortedValues = isDefence
     ? Object.keys(groups).sort((a,b) => parseFloat(b) - parseFloat(a))
