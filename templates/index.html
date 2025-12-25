@@ -416,6 +416,45 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (e) { console.error("Could not load pokemon list", e); }
 });
 
+// Load Purity names into the new datalist
+window.addEventListener('DOMContentLoaded', async () => {
+    const res = await fetch("/purity-list");
+    const names = await res.json();
+    const datalist = document.getElementById("purity-list");
+    names.forEach(n => {
+        const opt = document.createElement("option");
+        opt.value = n;
+        datalist.appendChild(opt);
+    });
+});
+
+// Listener for Purity search
+document.getElementById("purity-search").addEventListener('input', async function() {
+    const val = this.value;
+    const options = document.getElementById("purity-list").options;
+
+    for (let i = 0; i < options.length; i++) {
+        if (options[i].value === val) {
+            searchPurityPokemon(val);
+            break;
+        }
+    }
+});
+
+async function searchPurityPokemon(name) {
+    const res = await fetch("/get-purity-types", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pokemon: name })
+    });
+    const { types } = await res.json();
+
+    // Auto-fill the defence dropdowns and calculate
+    const selects = document.querySelectorAll("#defence-input-column select");
+    selects.forEach((s, i) => s.value = types[i] || "");
+    calculateDefence();
+}
+
 // 1. Submit when an item is selected from the datalist dropdown
 pokeSearchInput.addEventListener('input', function() {
     const val = this.value;
