@@ -82,6 +82,13 @@ header button.active {
   color: #66b3ff;
 }
 
+.search-section {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
 /* ================= INPUTS ================= */
 select {
   background: #222;
@@ -299,7 +306,7 @@ select {
           The grid below will show how effective every type is against it.
         </p>
         <p>
-            Colours are reversed from the Team Coverage page:<br>
+            Sorting and colours are reversed from the Team Coverage page:<br>
             <span style="color: #ff6b6b; font-weight: bold;">Red</span> numbers mean you take super-effective damage.<br>
             <span style="color: #51cf66; font-weight: bold;">Green</span> numbers mean you resist the damage.
         </p>
@@ -308,7 +315,7 @@ select {
     <div style="max-width: 500px; margin: 0 auto; background: #1a1a1a; padding: 2rem; border-radius: 8px; border: 1px solid #333;">
         <h2 style="margin-top:0; text-align:center;">Your Pokemon's Type(s)</h2>
 
-        <div style="display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1.5rem;">
+        <div class="search-section">
             <input type="text" id="poke-search" list="pokemon-list" placeholder="Search Pokemon..."
                 style="padding: 0.5rem; width: 70%; border-radius: 4px; border: 1px solid #444; background: #222; color: #eee;">
 
@@ -318,6 +325,10 @@ select {
 
         <div class="column" id="defence-input-column">
             </div>
+        <div class="search-section purity-theme">
+            <input type="text" id="purity-search" list="purity-list" placeholder="Search Purity Pokemon...">
+            <datalist id="purity-list"></datalist>
+        </div>
     </div>
 
     <div style="background: #1a1a1a; padding: 1.5rem; border-radius: 8px; border: 1px solid #333; margin-top: 2rem;">

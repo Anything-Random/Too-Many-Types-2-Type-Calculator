@@ -15,6 +15,10 @@ def configure_dex():
     dex = pd.read_csv("2 Many Types Spreadsheet - Dex.csv", index_col='Name')
     dex.to_pickle('Dex.pickle')
 
+def configure_purity_dex():
+    dex = pd.read_csv("Purity.csv", index_col='Name')
+    dex.to_pickle('Purity_Dex.pickle')
+
 def configure_types():
     sheet = pd.read_csv("Too Many Types Spreadsheet - Type Chart.csv")
     types = sheet['Unnamed: 1'].to_dict()
@@ -28,4 +32,4 @@ def configure_types():
         sheet[i] = pd.to_numeric(sheet[i])
     sheet.to_pickle('Type_Chart.pickle')
 
-configure_dex()
+configure_purity_dex()

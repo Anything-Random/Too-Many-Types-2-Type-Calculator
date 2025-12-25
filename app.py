@@ -50,10 +50,21 @@ def defence_route():
 def pokemon_list_route():
     return jsonify(get_all_pokemon_names())
 
+@app.route("/purity-list")
+def purity_list():
+    # Return names from the purity spreadsheet for the new datalist
+    return jsonify(get_all_purity_pokemon_names())
+
 @app.route("/get-types", methods=["POST"])
 def get_types_route():
     pokemon_name = request.json.get("pokemon")
     types = pokemon_to_types(pokemon_name)
+    return jsonify({"types": types})
+
+@app.route("/get-purity-types", methods=["POST"])
+def get_purity_types():
+    pokemon_name = request.json.get("pokemon")
+    types = purity_pokemon_to_types(pokemon_name)
     return jsonify({"types": types})
 
 if __name__ == "__main__":
