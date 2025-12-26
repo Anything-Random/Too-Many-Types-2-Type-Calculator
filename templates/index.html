@@ -241,6 +241,12 @@ select {
 
 /* ================= MOBILE RESPONSIVENESS ================= */
 @media (max-width: 768px) {
+
+  /* Inputs must be at least 16px to prevent iOS from zooming in */
+  input, select, .styled-input {
+    font-size: 16px !important;
+  }
+
   /* Header: Stack buttons */
   header {
     flex-direction: column;
@@ -289,24 +295,24 @@ select {
     flex: 1 1 100%;
   }
 
-  /* Checkbox Container */
-  .move-row div {
-      /* This targets the dual type checkbox div if wrapped in one,
-         or we can rely on natural flow */
-  }
-
   /* Search Sections: Stack Input and Button */
   .search-section {
     flex-direction: column;
   }
-  .styled-input {
-    width: 100% !important; /* Force full width */
-  }
+
+  /* Force large inputs/buttons to fill width */
+  .styled-input,
   .styled-btn {
-    width: 100%; /* Force full width */
+    width: 100% !important;
   }
 
-  /* Fix Purity search margin */
+  /* Exception for small inline buttons (Team Clear buttons) */
+  .btn-inline {
+    width: auto !important; /* Don't stretch */
+    padding: 0.3rem 0.8rem; /* Keep padding tight */
+    margin-left: 1rem;      /* Add space between text and button */
+  }
+
   #purity-search {
       margin: 0 0 0.5rem 0 !important;
   }
@@ -856,7 +862,7 @@ function buildTeamUI() {
 
     const clearBtn = document.createElement("button");
     clearBtn.textContent = "Clear";
-    clearBtn.classList.add("styled-btn", "btn-clear");
+    clearBtn.classList.add("styled-btn", "btn-clear", "btn-inline");
     clearBtn.style.padding = "0.3rem 0.8rem";
     clearBtn.style.fontSize = "0.8rem";
     clearBtn.onclick = () => clearSinglePokemon(p);
