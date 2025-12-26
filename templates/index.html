@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Type Calculator</title>
 
 <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
@@ -13,7 +14,7 @@ body {
   font-family: system-ui, sans-serif;
   background: #111;
   color: #eee;
-  padding-bottom: 3rem; 
+  padding-bottom: 3rem;
 }
 
 /* ================= HEADER ================= */
@@ -49,14 +50,14 @@ header button.active {
 
 /* ================= LAYOUT ================= */
 .container {
-  max-width: 900px; /* Default narrow width for Calculator */
+  max-width: 900px;
   margin: 0 auto;
   padding: 0 1rem;
-  transition: max-width 0.3s ease; /* Smooth transition when resizing */
+  transition: max-width 0.3s ease;
 }
 
 .container.wide {
-  max-width: 95%; 
+  max-width: 95%;
 }
 
 .view {
@@ -82,11 +83,43 @@ header button.active {
   color: #66b3ff;
 }
 
+/* ================= SEARCH SECTIONS ================= */
 .search-section {
   display: flex;
   gap: 0.5rem;
   justify-content: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+
+/* Standardized Input/Button styles for easier mobile control */
+.styled-input {
+  padding: 0.5rem;
+  width: 70%;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #222;
+  color: #eee;
+  box-sizing: border-box; /* Ensures padding doesn't break width */
+}
+
+.styled-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap; /* Prevent text wrapping inside button */
+}
+
+.btn-clear {
+  background: #cc3333;
+  color: white;
+}
+
+.btn-search {
+  background: #007acc;
+  color: white;
 }
 
 /* ================= INPUTS ================= */
@@ -114,7 +147,7 @@ select {
 .coverage-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
-  gap: 4px; 
+  gap: 4px;
 }
 
 .type-cell {
@@ -130,9 +163,9 @@ select {
   font-size: 0.75rem;
   text-align: center;
   border-bottom: 1px solid #444;
-  white-space: nowrap; 
+  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; 
+  text-overflow: ellipsis;
   font-weight: bold;
 }
 
@@ -157,13 +190,13 @@ select {
   border-radius: 8px;
   border: 1px solid #333;
 }
-  
+
 .column {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
 }
-  
+
 .column h2 {
   margin: 0 0 0.5rem;
   text-align: center;
@@ -205,6 +238,84 @@ select {
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
+
+/* ================= MOBILE RESPONSIVENESS ================= */
+@media (max-width: 768px) {
+  /* Header: Stack buttons */
+  header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  header button {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Layout: Reduce padding */
+  .container {
+    padding: 0 0.5rem;
+  }
+
+  /* Calculator: Stack vertically (Attacker -> Result -> Defender) */
+  .calculator {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  /* Reset result padding so it sits nicely in the middle */
+  .result {
+    padding-top: 0;
+    margin: 1rem 0;
+  }
+
+  /* Team Coverage: Wrap move rows */
+  .move-row {
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  /* Make "Move 1:" label take full width on mobile */
+  .move-row > span {
+    width: 100%;
+    margin-bottom: 0.2rem;
+    color: #999;
+    font-size: 0.85rem;
+  }
+
+  /* Make selects full width for easier tapping */
+  .move-row select {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  /* Checkbox Container */
+  .move-row div {
+      /* This targets the dual type checkbox div if wrapped in one,
+         or we can rely on natural flow */
+  }
+
+  /* Search Sections: Stack Input and Button */
+  .search-section {
+    flex-direction: column;
+  }
+  .styled-input {
+    width: 100% !important; /* Force full width */
+  }
+  .styled-btn {
+    width: 100%; /* Force full width */
+  }
+
+  /* Fix Purity search margin */
+  #purity-search {
+      margin: 0 0 0.5rem 0 !important;
+  }
+
+  /* Hide extraneous text on mobile */
+  .desktop-only {
+    display: none !important;
+  }
+}
 </style>
 </head>
 
@@ -217,7 +328,7 @@ select {
 </header>
 
 <div class="container" id="main-container">
-  
+
   <div class="description">
     <p style="margin-top: 0;">
       This page contains some handy tools for the ROM hack Too Many Types 2,
@@ -230,37 +341,37 @@ select {
     <div class="description" style="text-align: left; font-size: 0.95rem;">
       <p>
         <strong>How to use:</strong> Select up to two types for the attack, and four types for the defense.
-        Remember that you can begin typing with a dropdown box selected to find a type.
+          <span class="desktop-only">Remember that you can begin typing with a dropdown box selected to find a type.</span>
       </p>
-      <p>
-        <em>Disclaimer:</em> There are a few assumptions I'm unsure about.
-          Dual-type attacks are calculated by taking the
-        type effectiveness of each attack type individually and then
-        multiplying them together. At most 2 attack types are allowed.
-          Defending pokemon are allowed up to 4 types to account for
+      <p class="desktop-only">
+        <em>Disclaimer:</em> There are a few assumptions I'm unsure about:
+        Dual-type attacks are calculated by taking the effectiveness of
+        each attack type individually and then multiplying them together.
+        At most 2 attack types are allowed.
+        Defending pokemon are allowed up to 4 types to account for
         type-adding moves. Uno Reverse type is calculated
         by taking the reciprocal of the normal type effectiveness,
         with immunity becoming 2x.
       </p>
-      <p>
+        <p>
         If anyone has any corrections or feature requests they can message
         me in the Too Many Productions discord @anything_random.
-      </p>
+        </p>
     </div>
     <div style="text-align: right; margin-bottom: 1rem;">
-        <button onclick="clearMatchup()" style="padding: 0.5rem 1rem; border: none; background: #cc3333; color: white; border-radius: 4px; cursor: pointer; font-weight: bold;">Clear</button>
+        <button onclick="clearMatchup()" class="styled-btn btn-clear">Clear</button>
     </div>
     <div class="calculator">
       <div class="column" id="attack-column">
         <h2>Attacking Move Type(s)</h2>
         <select id="atk-s1"></select>
 
-        <div style="display:flex; align-items:center; gap:0.5rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.5rem;">
             <input type="checkbox" id="atk-dual">
             <label for="atk-dual" style="cursor:pointer; font-size:0.9rem;">Dual Type?</label>
         </div>
 
-        <select id="atk-s2" style="display:none;"></select>
+        <select id="atk-s2" style="display:none; margin-top:0.5rem;"></select>
       </div>
 
       <div class="result" id="result">—</div>
@@ -278,16 +389,20 @@ select {
   <div id="team" class="view">
     <div class="description" style="text-align: left; font-size: 0.95rem;">
       <p>
-        <strong>How to use:</strong> Select up to 4 move types for a team of up to 6 pokemon.
+        <strong>How to use:</strong> Select types for up to 4 moves per pokemon for a team of up to 6 pokemon.
         Under each pokemon you can see their individual type coverage, and at the bottom you
         can see your entire team's type coverage.
+      </p>
+      <p class="desktop-only">
+          <span style="color: #ff6b6b; font-weight: bold;">Red</span> = Resisted<br>
+          <span style="color: #51cf66; font-weight: bold;">Green</span> = Super Effective
       </p>
     </div>
 
     <h2 style="text-align:center; margin-bottom: 1.5rem;">Team Coverage</h2>
 
     <div style="text-align: right; margin-bottom: 1rem;">
-      <button onclick="clearFullTeam()" style="padding: 0.5rem 1rem; border: none; background: #cc3333; color: white; border-radius: 4px; cursor: pointer; font-weight: bold;">Clear All</button>
+      <button onclick="clearFullTeam()" class="styled-btn btn-clear">Clear All</button>
     </div>
 
     <div id="team-container"></div>
@@ -304,10 +419,10 @@ select {
           <strong>How to use:</strong> Search for a Pokemon below OR select up to 4 types manually.
           The grid below will show how effective every type is against it.
         </p>
-        <p>
+        <p class="desktop-only">
             Sorting and colours are reversed from the Team Coverage page:<br>
-            <span style="color: #ff6b6b; font-weight: bold;">Red</span> numbers mean you take super-effective damage.<br>
-            <span style="color: #51cf66; font-weight: bold;">Green</span> numbers mean you resist the damage.
+            <span style="color: #ff6b6b; font-weight: bold;">Red</span> = Super Effective<br>
+            <span style="color: #51cf66; font-weight: bold;">Green</span> = Resisted
         </p>
     </div>
 
@@ -315,18 +430,16 @@ select {
         <h2 style="margin-top:0; text-align:center;">Your Pokemon's Type(s)</h2>
 
         <div class="search-section">
-            <input type="text" id="poke-search" list="pokemon-list" placeholder="Search Pokemon..."
-                style="padding: 0.5rem; width: 70%; border-radius: 4px; border: 1px solid #444; background: #222; color: #eee;">
-
-            <button onclick="clearSearch()" style="padding: 0.5rem 1rem; border: none; background: #cc3333; color: white; border-radius: 4px; cursor: pointer;">Clear</button>
+            <input type="text" id="poke-search" list="pokemon-list" placeholder="Search Pokemon..." class="styled-input">
+            <button onclick="clearSearch()" class="styled-btn btn-clear">Clear</button>
         </div>
         <datalist id="pokemon-list"></datalist>
 
-        <div class="column" id="defence-input-column">
+        <div class="column" id="defence-input-column" style="margin-bottom: 1.5rem;">
             </div>
+
         <div class="search-section purity-theme">
-            <input type="text" id="purity-search" list="purity-list" placeholder="Search Purity Pokemon..."
-                style="padding: 0.5rem; margin: 1rem; width: 70%; border-radius: 4px; border: 1px solid #444; background: #222; color: #eee;">
+            <input type="text" id="purity-search" list="purity-list" placeholder="Search Purity Pokemon..." class="styled-input">
             <datalist id="purity-list"></datalist>
         </div>
     </div>
@@ -474,7 +587,7 @@ puritySearchInput.addEventListener('keydown', function(e) {
     }
 });
 
-// Clear everything
+
 function clearSearch() {
     // Clear both input boxes
     pokeSearchInput.value = "";
@@ -559,9 +672,7 @@ async function calculateMatchup() {
         body: JSON.stringify({ attackers, defenders })
       });
 
-      // Destructure the multiplier property directly from the JSON
       const { multiplier } = await response.json();
-
       document.getElementById("result").textContent = `${multiplier}×`;
     } catch {
       document.getElementById("result").textContent = "ERR";
@@ -569,7 +680,7 @@ async function calculateMatchup() {
 }
 
 function clearMatchup() {
-    // 1. Reset Attacking Section
+    // Reset Attacking Section
     const s1 = document.getElementById("atk-s1");
     const s2 = document.getElementById("atk-s2");
     const dual = document.getElementById("atk-dual");
@@ -579,11 +690,11 @@ function clearMatchup() {
     dual.checked = false;
     s2.style.display = "none";
 
-    // 2. Reset Defence Section
+    // Reset Defence Section
     const defenders = document.querySelectorAll("#defence-column select");
     defenders.forEach(s => s.value = "");
 
-    // 3. Reset the Multiplier Result Text
+    // Reset the Multiplier Result Text
     document.getElementById("result").textContent = "—";
 }
 
@@ -617,7 +728,7 @@ function renderTable(container, data, isDefence = false) {
   container.innerHTML = "";
   if (!data || Object.keys(data).length === 0) return;
 
-  // 1. Group Data by Value
+  // Group Data by Value
   const groups = {};
   Object.keys(data).forEach(type => {
       const val = data[type];
@@ -625,12 +736,13 @@ function renderTable(container, data, isDefence = false) {
       groups[val].push(type);
   });
 
-  // 2. Sort values ascending for Team page and descending for defence page
+  // Sort values ascending for Team page and descending for defence page
 
   const sortedValues = isDefence
     ? Object.keys(groups).sort((a,b) => parseFloat(b) - parseFloat(a))
     : Object.keys(groups).sort((a,b) => parseFloat(a) - parseFloat(b));
-  // 3. Render Each Group
+
+  // Render Each Group
   sortedValues.forEach(valString => {
       const val = parseFloat(valString);
       const types = groups[valString].sort();
@@ -702,7 +814,7 @@ function clearFullTeam() {
             m.s2.style.display = "none";
         });
     });
-    calculateTeam(); // This will send one "empty" request and clear all tables
+    calculateTeam();
 }
 
 async function clearSinglePokemon(index) {
@@ -719,7 +831,6 @@ async function clearSinglePokemon(index) {
     const resultDiv = document.getElementById(`pokemon-${index}`);
     if (resultDiv) resultDiv.innerHTML = "";
 
-    // Use await to ensure calculation finishes before the next step
     await calculateTeam();
 }
 
@@ -731,12 +842,11 @@ function buildTeamUI() {
   for (let p = 0; p < TEAM_SIZE; p++) {
     const block = document.createElement("div");
     block.style.marginBottom = "1.5rem";
-    block.style.position = "relative"; // For button positioning
+    block.style.position = "relative";
     block.setAttribute("data-pokemon-block", "true");
     block.setAttribute("data-pokemon-index", p);
     block._moves = [];
 
-    // Header with Individual Clear Button
     const headerRow = document.createElement("div");
     headerRow.style.display = "flex";
     headerRow.style.justifyContent = "space-between";
@@ -746,13 +856,9 @@ function buildTeamUI() {
 
     const clearBtn = document.createElement("button");
     clearBtn.textContent = "Clear";
+    clearBtn.classList.add("styled-btn", "btn-clear");
     clearBtn.style.padding = "0.3rem 0.8rem";
     clearBtn.style.fontSize = "0.8rem";
-    clearBtn.style.background = "#cc3333";
-    clearBtn.style.color = "#eee";
-    clearBtn.style.border = "1px solid #555";
-    clearBtn.style.borderRadius = "4px";
-    clearBtn.style.cursor = "pointer";
     clearBtn.onclick = () => clearSinglePokemon(p);
 
     headerRow.appendChild(clearBtn);
@@ -802,7 +908,6 @@ async function calculateTeam() {
     const rows = document.querySelectorAll("#team-container > div[data-pokemon-block]");
     const fullTeamInputs = [];
 
-    // 1. Gather all data locally first (No Network)
     rows.forEach(row => {
         const moves = [];
         row._moves.forEach(m => {
@@ -813,7 +918,6 @@ async function calculateTeam() {
         fullTeamInputs.push(moves);
     });
 
-    // 2. Single API Call for everything
     try {
         const res = await fetch("/team-coverage", {
             method: "POST",
@@ -822,7 +926,6 @@ async function calculateTeam() {
         });
         const { individual, total } = await res.json();
 
-        // 3. Update the UI all at once
         individual.forEach((data, i) => {
             const div = document.getElementById(`pokemon-${i}`);
             if (data) renderTable(div, data);
