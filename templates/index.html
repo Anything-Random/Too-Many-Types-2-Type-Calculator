@@ -401,84 +401,97 @@ for(let i=0; i<4; i++) {
 // ===================== POKEMON SEARCH LOGIC =====================
 
 const pokeSearchInput = document.getElementById("poke-search");
-const pokemonDatalist = document.getElementById("pokemon-list");
+const pokeDatalist = document.getElementById("pokemon-list");
+
 const puritySearchInput = document.getElementById("purity-search");
 const purityDatalist = document.getElementById("purity-list");
 
-// Load Pokemon names on startup
+// 1. Load BOTH lists on Startup
 window.addEventListener('DOMContentLoaded', async () => {
+    // Load Normal Dex
     try {
         const res = await fetch("/pokemon-list");
         const names = await res.json();
-        const datalist = document.getElementById("pokemon-list");
         names.forEach(name => {
             const opt = document.createElement("option");
             opt.value = name;
-            datalist.appendChild(opt);
+            pokeDatalist.appendChild(opt);
         });
-    } catch (e) { console.error("Could not load pokemon list", e); }
+    } catch (e) { console.error("Could not load normal list", e); }
+
+    // Load Purity Dex
+    try {
+        const res = await fetch("/purity-list");
+        const names = await res.json();
+        names.forEach(name => {
+            const opt = document.createElement("option");
+            opt.value = name;
+            purityDatalist.appendChild(opt);
+        });
+    } catch (e) { console.error("Could not load purity list", e); }
 });
 
-// Load Purity names into new datalist on startup
-window.addEventListener('DOMContentLoaded', async () => {
-    const res = await fetch("/purity-list");
-    const names = await res.json();
-    const datalist = document.getElementById("purity-list");
-    names.forEach(n => {
-        const opt = document.createElement("option");
-        opt.value = n;
-        datalist.appendChild(opt);
-    });
-});
+// ================= NORMAL SEARCH LISTENERS =================
 
-// Submit when an item is selected from the datalist dropdown
+// Trigger on Dropdown Select
 pokeSearchInput.addEventListener('input', function() {
     const val = this.value;
-    const options = pokemonDatalist.options;
-
+    const options = pokeDatalist.options;
     for (let i = 0; i < options.length; i++) {
         if (options[i].value === val) {
-            searchPokemon();
+            searchPokemon(val);
             break;
         }
     }
 });
 
-// Listener for Purity search
-puritySearchInput.addEventListener('input', async function() {
-    const val = this.value;
-    const options = purityDatalist.options;
-
-    for (let i = 0; i < options.length; i++) {
-        if (options[i].value === val) {
-            searchPurityPokemon();
-            break;
-        }
-    }
-});
-
-// 2. Submit when the "Enter" key is pressed
+// Trigger on Enter Key
 pokeSearchInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
-        searchPokemon();
+        searchPokemon(this.value);
     }
 });
 
-// Function to reset the search and the dropdowns
+// ================= PURITY SEARCH LISTENERS =================
+
+// Trigger on Dropdown Select
+puritySearchInput.addEventListener('input', function() {
+    const val = this.value;
+    const options = purityDatalist.options;
+    for (let i = 0; i < options.length; i++) {
+        if (options[i].value === val) {
+            searchPurityPokemon(val);
+            break;
+        }
+    }
+});
+
+// Trigger on Enter Key
+puritySearchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        searchPurityPokemon(this.value);
+    }
+});
+
+// Clear everything
 function clearSearch() {
-    document.getElementById("poke-search").value = "";
-    document.getElementById("purity-search").value = "";
+    // Clear both input boxes
+    pokeSearchInput.value = "";
+    puritySearchInput.value = "";
+
+    // Clear dropdowns and results
     const selects = document.querySelectorAll("#defence-input-column select");
     selects.forEach(s => s.value = "");
-
-    // Clear the results grid
     document.getElementById("defence-results").innerHTML = "";
 }
 
-async function searchPokemon() {
-    const name = pokeSearchInput.value;
+async function searchPokemon(name) {
     if(!name) return;
+
+    // Clear other search bar to avoid confusion
+    puritySearchInput.value = "";
 
     try {
         const res = await fetch("/get-types", {
@@ -486,33 +499,16 @@ async function searchPokemon() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ pokemon: name })
         });
-
-        // Destructuring
         const { types } = await res.json();
-
-        // Auto-fill the defence dropdowns
-        const selects = document.querySelectorAll("#defence-input-column select");
-
-        // Reset all selects first
-        selects.forEach(s => s.value = "");
-
-        if(types && types.length > 0) {
-            types.forEach((t, index) => {
-                if(index < selects.length) {
-                    selects[index].value = t;
-                }
-            });
-            // Automatically run calculation and wait for it
-            await calculateDefence();
-        }
-    } catch (e) {
-        console.error("Error fetching Pokemon data:", e);
-    }
+        populateAndCalculate(types);
+    } catch (e) { console.error(e); }
 }
 
-async function searchPurityPokemon() {
-    const name = puritySearchInput.value;
+async function searchPurityPokemon(name) {
     if(!name) return;
+
+    // Clear other search bar to avoid confusion
+    pokeSearchInput.value = "";
 
     try {
         const res = await fetch("/get-purity-types", {
@@ -520,23 +516,21 @@ async function searchPurityPokemon() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ pokemon: name })
         });
-
-        // Destructuring
         const { types } = await res.json();
+        populateAndCalculate(types);
+    } catch (e) { console.error(e); }
+}
 
-        // Auto-fill the defence dropdowns and calculate
-        const selects = document.querySelectorAll("#defence-input-column select");
-        selects.forEach(s => s.value = "");
-        if(types && types.length > 0) {
-            types.forEach((t, index) => {
-                if(index < selects.length) {
-                    selects[index].value = t;
-                }
-            });
-            await calculateDefence();
-        }
-    } catch (e) {
-        console.error("Error fetching Pokemon data:", e);
+// Helper to update UI for both search types
+async function populateAndCalculate(types) {
+    const selects = document.querySelectorAll("#defence-input-column select");
+    selects.forEach(s => s.value = "");
+
+    if(types && types.length > 0) {
+        types.forEach((t, index) => {
+            if(index < selects.length) selects[index].value = t;
+        });
+        await calculateDefence();
     }
 }
 
