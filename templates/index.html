@@ -401,8 +401,10 @@ for(let i=0; i<4; i++) {
 
 const pokeSearchInput = document.getElementById("poke-search");
 const pokemonDatalist = document.getElementById("pokemon-list");
+const puritySearchInput = document.getElementById("purity-search");
+const purityDatalist = document.getElementById("purity-list");
 
-// Load Pokemon Names on Startup
+// Load Pokemon names on startup
 window.addEventListener('DOMContentLoaded', async () => {
     try {
         const res = await fetch("/pokemon-list");
@@ -416,7 +418,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (e) { console.error("Could not load pokemon list", e); }
 });
 
-// Load Purity names into the new datalist
+// Load Purity names into new datalist on startup
 window.addEventListener('DOMContentLoaded', async () => {
     const res = await fetch("/purity-list");
     const names = await res.json();
@@ -428,34 +430,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-// Listener for Purity search
-document.getElementById("purity-search").addEventListener('input', async function() {
-    const val = this.value;
-    const options = document.getElementById("purity-list").options;
-
-    for (let i = 0; i < options.length; i++) {
-        if (options[i].value === val) {
-            searchPurityPokemon(val);
-            break;
-        }
-    }
-});
-
-async function searchPurityPokemon(name) {
-    const res = await fetch("/get-purity-types", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pokemon: name })
-    });
-    const { types } = await res.json();
-
-    // Auto-fill the defence dropdowns and calculate
-    const selects = document.querySelectorAll("#defence-input-column select");
-    selects.forEach((s, i) => s.value = types[i] || "");
-    calculateDefence();
-}
-
-// 1. Submit when an item is selected from the datalist dropdown
+// Submit when an item is selected from the datalist dropdown
 pokeSearchInput.addEventListener('input', function() {
     const val = this.value;
     const options = pokemonDatalist.options;
@@ -463,6 +438,19 @@ pokeSearchInput.addEventListener('input', function() {
     for (let i = 0; i < options.length; i++) {
         if (options[i].value === val) {
             searchPokemon();
+            break;
+        }
+    }
+});
+
+// Listener for Purity search
+puritySearchInput.addEventListener('input', async function() {
+    const val = this.value;
+    const options = purityDatalist.options;
+
+    for (let i = 0; i < options.length; i++) {
+        if (options[i].value === val) {
+            searchPurityPokemon();
             break;
         }
     }
@@ -479,6 +467,7 @@ pokeSearchInput.addEventListener('keydown', function(e) {
 // Function to reset the search and the dropdowns
 function clearSearch() {
     document.getElementById("poke-search").value = "";
+    document.getElementById("purity-search").value = "";
     const selects = document.querySelectorAll("#defence-input-column select");
     selects.forEach(s => s.value = "");
 
@@ -497,9 +486,10 @@ async function searchPokemon() {
             body: JSON.stringify({ pokemon: name })
         });
 
-        // Destructuring to avoid "unresolved variable" warnings
+        // Destructuring
         const { types } = await res.json();
 
+        // Auto-fill the defence dropdowns
         const selects = document.querySelectorAll("#defence-input-column select");
 
         // Reset all selects first
@@ -512,6 +502,36 @@ async function searchPokemon() {
                 }
             });
             // Automatically run calculation and wait for it
+            await calculateDefence();
+        }
+    } catch (e) {
+        console.error("Error fetching Pokemon data:", e);
+    }
+}
+
+async function searchPurityPokemon() {
+    const name = puritySearchInput.value;
+    if(!name) return;
+
+    try {
+        const res = await fetch("/get-purity-types", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pokemon: name })
+        });
+
+        // Destructuring
+        const { types } = await res.json();
+
+        // Auto-fill the defence dropdowns and calculate
+        const selects = document.querySelectorAll("#defence-input-column select");
+        selects.forEach(s => s.value = "");
+        if(types && types.length > 0) {
+            types.forEach((t, index) => {
+                if(index < selects.length) {
+                    selects[index].value = t;
+                }
+            });
             await calculateDefence();
         }
     } catch (e) {
