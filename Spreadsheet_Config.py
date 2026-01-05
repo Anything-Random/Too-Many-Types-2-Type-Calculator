@@ -32,4 +32,4 @@ def configure_types():
         sheet[i] = pd.to_numeric(sheet[i])
     sheet.to_pickle('Type_Chart.pickle')
 
-configure_purity_dex()
+configure_dex()
