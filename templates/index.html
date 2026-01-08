@@ -346,22 +346,19 @@ select {
 
     <div class="description" style="text-align: left; font-size: 0.95rem;">
       <p>
-        <strong>How to use:</strong> Select up to two types for the attack, and four types for the defense.
+        <strong>How to use:</strong> Select up to two types for attack, and four types for defence.
           <span class="desktop-only">Remember that you can begin typing with a dropdown box selected to find a type.</span>
       </p>
       <p class="desktop-only">
-        <em>Disclaimer:</em> There are a few assumptions I'm unsure about:
-        Dual-type attacks are calculated by taking the effectiveness of
-        each attack type individually and then multiplying them together.
-        At most 2 attack types are allowed.
-        Defending pokemon are allowed up to 4 types to account for
-        type-adding moves. Uno Reverse type is calculated
-        by taking the reciprocal of the normal type effectiveness,
-        with immunity becoming 2x.
+        <em>Disclaimer:</em> I've made the assumption that the Uno Reverse type is calculated
+        by taking the reciprocal of regular type effectiveness,
+        with a special case of immunity becoming 2x. To account for edge cases,
+        attacking moves can have up to 2 types, and
+        defending Pokemon are allowed up to 4 types.
       </p>
         <p>
-        If anyone has any corrections or feature requests they can message
-        me in the Too Many Productions discord @anything_random.
+        If you have any corrections or suggestions, you can message
+        me in the <a href=https://discord.com/invite/PADwE683Nk>Too Many Productions</a> Discord @anything_random.
         </p>
     </div>
     <div style="text-align: right; margin-bottom: 1rem;">
@@ -383,7 +380,7 @@ select {
       <div class="result" id="result">—</div>
 
       <div class="column" id="defence-column">
-        <h2>Defence Type(s)</h2>
+        <h2>Defending Pokemon Type(s)</h2>
         <select></select>
         <select></select>
         <select></select>
@@ -395,8 +392,8 @@ select {
   <div id="team" class="view">
     <div class="description" style="text-align: left; font-size: 0.95rem;">
       <p>
-        <strong>How to use:</strong> Select types for up to 4 moves per pokemon for a team of up to 6 pokemon.
-        Under each pokemon you can see their individual type coverage, and at the bottom you
+        <strong>How to use:</strong> Select types for up to 4 moves per Pokemon for a team of up to 6 Pokemon.
+        Under each Pokemon you can see their individual type coverage, and at the bottom you
         can see your entire team's type coverage.
       </p>
       <p class="desktop-only">
@@ -433,7 +430,7 @@ select {
     </div>
 
     <div style="max-width: 500px; margin: 0 auto; background: #1a1a1a; padding: 2rem; border-radius: 8px; border: 1px solid #333;">
-        <h2 style="margin-top:0; text-align:center;">Your Pokemon's Type(s)</h2>
+        <h2 style="margin-top:0; text-align:center;">Pokemon's Type(s)</h2>
 
         <div class="search-section">
             <input type="text" id="poke-search" list="pokemon-list" placeholder="Search Pokemon..." class="styled-input">
